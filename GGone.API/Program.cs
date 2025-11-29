@@ -1,3 +1,5 @@
+using GGone.API.Business.Abstracts;
+using GGone.API.Business.Services.Auth;
 using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +14,13 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<GGoneDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+
+//Login and Token Services
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
