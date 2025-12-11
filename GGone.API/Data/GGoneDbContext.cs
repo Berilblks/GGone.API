@@ -8,6 +8,7 @@ namespace GGone.API.Data
     {
         public GGoneDbContext(DbContextOptions<GGoneDbContext> options) : base(options)
         {
+
         }
 
         public DbSet<User> Users { get; set; }

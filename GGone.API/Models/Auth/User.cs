@@ -13,6 +13,8 @@ namespace GGone.API.Models.Auth
         public string? Phone { get; set; }
         public byte[]? PasswordHash { get; set; }
         public byte[]? PasswordSalt { get; set; }
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordExpires { get; set; }
         public string? ProfilePhotoUrl { get; set; }
         public int ActiveDays { get; set; }
         public DateOnly LastLoginDate { get; set; }

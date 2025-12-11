@@ -4,6 +4,7 @@ using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GGone.API.Migrations
 {
     [DbContext(typeof(GGoneDbContext))]
-    partial class GGoneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251209203426_AddAddictionTrackingTables")]
+    partial class AddAddictionTrackingTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,17 +36,14 @@ namespace GGone.API.Migrations
                     b.Property<int>("AddictionType")
                         .HasColumnType("int");
 
-                    b.Property<double>("DailyConsumption")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime>("LastConsumptionDate")
-                        .HasColumnType("datetime2");
+                    b.Property<bool>("DidConsume")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("QuitDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("UnitPrice")
-                        .HasColumnType("float");
+                    b.Property<DateTime>("RecordDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -85,12 +85,6 @@ namespace GGone.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProfilePhotoUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ResetPasswordExpires")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ResetPasswordToken")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Surname")

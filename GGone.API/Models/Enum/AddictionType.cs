@@ -2,7 +2,8 @@
 {
     public enum AddictionType
     {
+        None = 0,
         Alcohol = 1,
-        Cigarette = 2
+        Smoking = 2
     }
 }

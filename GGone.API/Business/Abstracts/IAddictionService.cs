@@ -1,17 +1,25 @@
 ﻿using GGone.API.Models;
 using GGone.API.Models.Addiction;
+using GGone.API.Models.Addictions;
+using GGone.API.Models.Enum;
 
 namespace GGone.API.Business.Abstracts
 {
     public interface IAddictionService
     {
-        //Bağımlılık ekleme
-        Task<BaseResponse<AddictionResponse>> AddAddiction(AddictionRequest request);
-        //Bağımlılık listeleme
-        Task<BaseResponse<List<AddictionResponse>>> GetAllAddictions(AddictionRequest request);
-        //Kullanıcı Id'sine göre bağımlılık bilgisi getirme
-        Task<BaseResponse<AddictionResponse>> GetAddictionByUserId(int userId);
-        //Bağımlılık bilgisi güncelleme
-        Task<BaseResponse<AddictionResponse>> UpdateAddiction(int userId, AddictionRequest request);
+        // Add a new addiction for a user
+        Task<BaseResponse<Addiction>> AddUserAddictionAsync(AddAddictionRequest request);
+
+        // List all addictions for a user
+        Task<BaseResponse<List<Addiction>>> GetUserAddictionsAsync(GetAddictionRequest request);
+
+        // Record a daily addiction status
+        Task<BaseResponse<object>> QuitDateAsync(QuitDateRequest request);
+
+        // Counter for addictions
+        Task<BaseResponse<CounterResponse>> GetDependencyCounterAsync(GetCounterRequest request);
+
+        // Günlük durum kontrolü
+        Task<BaseResponse<bool>> CheckDailyStatusAsync(GetAddictionRequest request);
     }
 }
