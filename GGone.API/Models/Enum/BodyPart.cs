@@ -2,12 +2,11 @@
 {
     public enum BodyPart
     {
-        AllBody = 0,
-        Chest = 1,
-        Back = 2,
-        Legs = 3,
-        Arms = 4,
+        Abs = 1,
+        Chest = 2,
+        Back = 3,
+        Legs = 4,
         Shoulders = 5,
-        Core = 6    
+        Arms = 6
     }
 }

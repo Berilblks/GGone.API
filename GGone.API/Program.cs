@@ -1,5 +1,6 @@
 using GGone.API.Business.Abstracts;
 using GGone.API.Business.Services.Auth;
+using GGone.API.Business.Services.Exercises;
 using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,10 @@ builder.Configuration
 
 //Login and Token Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Exercise Services
+builder.Services.AddScoped<IExerciseDataFetcher, RapidExerciseDataFetcher>();
+builder.Services.AddScoped<IExerciseService, ExerciseService>(); 
 
 var app = builder.Build();
 

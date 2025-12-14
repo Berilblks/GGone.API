@@ -7,5 +7,7 @@
         EmailAlreadyExists = 3,
         PasswordIncorrect = 4,
         NewPasswordIsSameAsOld = 5,
+        ExerciseNotFound = 6,
+        ExerciseNotBeSynchorized = 7
     }
 }
