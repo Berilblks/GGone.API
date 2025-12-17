@@ -1,4 +1,5 @@
-﻿using GGone.API.Business.Abstracts;
+﻿using AutoMapper;
+using GGone.API.Business.Abstracts;
 using GGone.API.Data;
 using GGone.API.Models;
 using GGone.API.Models.Addictions;
@@ -10,9 +11,12 @@ namespace GGone.API.Business.Services.Addiction
     public class AddictionService : IAddictionService
     {
         private readonly GGoneDbContext _context;
-        public AddictionService(GGoneDbContext context)
+        private readonly IMapper _mapper;
+
+        public AddictionService(GGoneDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // Kullanıcının belirli bir bağımlılığı eklemesini sağlar
@@ -33,15 +37,8 @@ namespace GGone.API.Business.Services.Addiction
                 }
                 else
                 {
-                    existingAddiction = new Models.Addiction.Addiction
-                    {
-                        UserId = request.UserId,
-                        AddictionType = request.Type,
-                        QuitDate = request.QuitDate,
-                        DailyConsumption = request.DailyConsumption,
-                        UnitPrice = request.UnitPrice,
-                        LastConsumptionDate = DateTime.UtcNow
-                    };
+                    existingAddiction = _mapper.Map<Models.Addiction.Addiction>(request);
+                    existingAddiction.LastConsumptionDate = DateTime.UtcNow;
                     _context.Addictions.Add(existingAddiction);
                 }
 
@@ -126,16 +123,8 @@ namespace GGone.API.Business.Services.Addiction
 
             var daysClean = (int)(DateTime.UtcNow.Date - addiction.QuitDate).TotalDays;
 
-            var response = new CounterResponse
-            {
-                UserId = request.UserId,
-                Type = addiction.AddictionType,
-                DaysClean = daysClean < 0 ? 0 : daysClean,
-                QuitDate = addiction.QuitDate,
-                LastConsumptionDate = addiction.LastConsumptionDate,
-                DailyConsumption = addiction.DailyConsumption,
-                UnitPrice = addiction.UnitPrice
-            };
+            var response = _mapper.Map <CounterResponse>(addiction);
+            response.DaysClean = daysClean;
 
             return new BaseResponse<CounterResponse> { Success = true, Data = response };
         }

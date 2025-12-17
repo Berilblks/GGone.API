@@ -1,5 +1,4 @@
-﻿using GGone.API.Models.Exercises; 
-
+﻿
 namespace GGone.API.Models
 {
     public class BaseResponse<T>
@@ -7,33 +6,34 @@ namespace GGone.API.Models
         public T? Data { get; set; }
         public bool Success { get; set; }
         public string? Message { get; set; }
-
-        // Hata kodları veya detayları
         public string? Error { get; set; }
         public int? ErrorCode { get; set; }
 
         public BaseResponse()
         {
-            Success = true;
         }
 
-        public BaseResponse(T data)
+        public BaseResponse(T data, string message = "İşlem başarıyla tamamlandı.")
         {
             Success = true;
             Data = data;
-            Message = "İşlem başarıyla tamamlandı.";
+            Message = message;
         }
 
-       
-        public BaseResponse(bool success, string message)
+        public static BaseResponse<T> Ok(T data, string message = "Başarılı")
         {
-            Success = success;
-            Message = message;
+            return new BaseResponse<T>(data, message);
+        }
 
-            if (!success)
+        public static BaseResponse<T> Fail(string error, int? errorCode = null)
+        {
+            return new BaseResponse<T>
             {
-                Error = message; 
-            }
+                Success = false,
+                Error = error,
+                Message = error,
+                ErrorCode = errorCode
+            };
         }
     }
 }

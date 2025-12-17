@@ -45,7 +45,11 @@ namespace GGone.API.Business.Services.Exercises
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new BaseResponse<string>(false, $"API İsteği Başarısız: {response.ReasonPhrase}");
+                    return BaseResponse<string>.Fail
+                    (
+                        $"API İsteği Başarısız: {response.ReasonPhrase}"
+                    );
+
                 }
 
                 var jsonBody = await response.Content.ReadAsStringAsync();
@@ -58,17 +62,21 @@ namespace GGone.API.Business.Services.Exercises
 
                 if (exercises == null || !exercises.Any())
                 {
-                    return new BaseResponse<string>(true, "API'den egzersiz verisi gelmedi.");
+                    return BaseResponse<string>.Fail("API'den egzersiz verisi gelmedi.");
                 }
 
                 // 4. Veri tabanına kaydetme (Mapping işlemi burada gerçekleşecek)
                 int savedCount = await SaveToDatabase(exercises);
 
-                return new BaseResponse<string>(true, $"{savedCount} adet egzersiz başarıyla veritabanına kaydedildi.");
+                return BaseResponse<string>.Ok(
+                    $"{savedCount} adet egzersiz başarıyla veritabanına kaydedildi."
+                );
             }
             catch (Exception ex)
             {
-                return new BaseResponse<string>(false, $"Veri çekme veya kaydetme hatası: {ex.Message}");
+                return BaseResponse<string>.Fail(
+                    $"Veri çekme veya kaydetme hatası: {ex.Message}"
+                );
             }
         }
 

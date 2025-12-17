@@ -1,4 +1,5 @@
-﻿using GGone.API.Business.Abstracts;
+﻿using AutoMapper;
+using GGone.API.Business.Abstracts;
 using GGone.API.Data;
 using GGone.API.Models;
 using GGone.API.Models.Auth;
@@ -16,11 +17,13 @@ namespace GGone.API.Business.Services.Auth
     {
         private readonly IConfiguration _config;
         private readonly GGoneDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AuthService(GGoneDbContext context, IConfiguration config)
+        public AuthService(GGoneDbContext context, IConfiguration config, IMapper mapper)
         {
             _config = config;
             _context = context;
+            _mapper = mapper;
         }
 
         // LOGIN işlemleri
@@ -62,21 +65,14 @@ namespace GGone.API.Business.Services.Auth
 
             CreatePasswordHash(request.Password, out byte[] hash, out byte[] salt);
 
-            var user = new User
-            {
-                Name = request.Name,
-                Surname = request.Surname,
-                Email = request.Email,
-                PasswordHash = hash,
-                PasswordSalt = salt
-            };
+            var user = _mapper.Map<User>(request);
+
+            user.PasswordHash = hash;
+            user.PasswordSalt = salt;
 
             var createdUser = _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            response.Data = new RegisterResponse()
-            {
-                Id = createdUser.Entity.Id
-            };
+            response.Data = _mapper.Map<RegisterResponse>(createdUser.Entity);
 
             return response;
             
@@ -135,6 +131,7 @@ namespace GGone.API.Business.Services.Auth
             return true;
         }
 
+        // Change Password
         public async Task<BaseResponse<ChangePasswordResponse>> ChangePassword(ChangePasswordRequest request)
         {
             BaseResponse<ChangePasswordResponse> response = new();
@@ -168,7 +165,7 @@ namespace GGone.API.Business.Services.Auth
             user.PasswordHash = newHash;
             user.PasswordSalt = newSalt;
 
-            var createdUser = _context.Users.Update(user);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
    
             response.Data = new ChangePasswordResponse()

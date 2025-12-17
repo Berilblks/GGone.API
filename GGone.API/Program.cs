@@ -25,7 +25,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Exercise Services
 builder.Services.AddScoped<IExerciseDataFetcher, RapidExerciseDataFetcher>();
-builder.Services.AddScoped<IExerciseService, ExerciseService>(); 
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
+
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 

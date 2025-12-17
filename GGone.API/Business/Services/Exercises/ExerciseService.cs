@@ -1,4 +1,5 @@
-﻿using GGone.API.Business.Abstracts;
+﻿using AutoMapper;
+using GGone.API.Business.Abstracts;
 using GGone.API.Data;
 using GGone.API.Models;
 using GGone.API.Models.Enum;
@@ -10,16 +11,18 @@ namespace GGone.API.Business.Services.Exercises
     public class ExerciseService : IExerciseService
     {
         private readonly GGoneDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ExerciseService(GGoneDbContext context)
+        public ExerciseService(GGoneDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
         public async Task<BaseResponse<List<ExerciseResponse>>> GetExercises(ExerciseFilterRequest request)
         {
             var query = _context.Exercises.AsQueryable();
 
-            if (request.BodyPart.HasValue)
+            if (request.BodyPart.HasValue) 
                 query = query.Where(x => x.BodyPart == (BodyPart)request.BodyPart.Value);
 
             if (request.ExerciseLevel.HasValue)
@@ -30,17 +33,7 @@ namespace GGone.API.Business.Services.Exercises
 
             var exercises = await query.ToListAsync();
 
-            var responseList = exercises.Select(x => new ExerciseResponse
-            {
-                Id = x.Id,
-                Name = x.Name,
-                ImageUrl = x.ImageUrl,
-                Description = x.Description,
-                Detail = x.Detail,
-                BodyPart = x.BodyPart,
-                ExerciseLevel = x.ExerciseLevel,
-                IsHome = x.IsHome
-            }).ToList();
+            var responseList = _mapper.Map<List<ExerciseResponse>>(exercises);
 
             return new BaseResponse<List<ExerciseResponse>>(responseList);
         }
@@ -49,18 +42,8 @@ namespace GGone.API.Business.Services.Exercises
         {
             var exercise = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == id);
 
-            var response = new ExerciseResponse
-            {
-                Id = exercise.Id,
-                Name = exercise.Name,
-                ImageUrl = exercise.ImageUrl,
-                Description = exercise.Description,
-                Detail = exercise.Detail,
-                BodyPart = exercise.BodyPart,
-                ExerciseLevel = exercise.ExerciseLevel,
-                IsHome = exercise.IsHome
-            };
-
+            var response = _mapper.Map<ExerciseResponse>(exercise);
+           
             return new BaseResponse<ExerciseResponse>(response);
         }
     }
