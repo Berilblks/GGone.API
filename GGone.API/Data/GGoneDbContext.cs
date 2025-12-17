@@ -1,5 +1,6 @@
 ﻿using GGone.API.Models.Addiction;
 using GGone.API.Models.Auth;
+using GGone.API.Models.BMI;
 using GGone.API.Models.Exercises;
 using GGone.API.Models.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -18,5 +19,6 @@ namespace GGone.API.Data
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<TaskItem> TaskItems { get; set; }
         public DbSet<DailyTaskLog> DailyTaskLogs { get; set; }
+        public DbSet<UserHealthRecord> UserHealthRecords { get; set; }
     }
 }
