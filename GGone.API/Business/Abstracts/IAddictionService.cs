@@ -1,7 +1,7 @@
 ﻿using GGone.API.Models;
 using GGone.API.Models.Addiction;
 using GGone.API.Models.Addictions;
-using GGone.API.Models.Enum;
+
 
 namespace GGone.API.Business.Abstracts
 {

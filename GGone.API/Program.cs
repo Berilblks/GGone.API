@@ -1,5 +1,6 @@
 using GGone.API.Business.Abstracts;
 using GGone.API.Business.Services.Addiction;
+using GGone.API.Business.Services.AI;
 using GGone.API.Business.Services.Auth;
 using GGone.API.Business.Services.BMI;
 using GGone.API.Business.Services.Exercises;
@@ -8,6 +9,10 @@ using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Logging.AddConsole();
+
 
 // Add services to the container.
 
@@ -39,6 +44,8 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+builder.Services.AddHttpClient<IAIChatService, GeminiChatService>();
 
 
 var app = builder.Build();

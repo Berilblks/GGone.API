@@ -3,7 +3,7 @@ using GGone.API.Business.Abstracts;
 using GGone.API.Business.Rules;
 using GGone.API.Data;
 using GGone.API.Models.BMI;
-using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace GGone.API.Business.Services.BMI
 {
@@ -38,6 +38,22 @@ namespace GGone.API.Business.Services.BMI
             var response = _mapper.Map<BmiResponse>(record);
 
             response.Status = BmiRules.GetStatus(record.BmiResult);
+
+            return response;
+        }
+
+        public async Task<BmiResponse?> GetLatestBmiByUserId(int userId)
+        {
+            var latestRecord = await _context.UserHealthRecords
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (latestRecord == null)
+                return null;
+
+            var response = _mapper.Map<BmiResponse>(latestRecord);
+            response.Status = BmiRules.GetStatus(latestRecord.BmiResult);
 
             return response;
         }
