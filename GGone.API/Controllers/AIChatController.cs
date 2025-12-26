@@ -1,6 +1,7 @@
 ﻿using GGone.API.Business.Abstracts;
 using GGone.API.Models;
 using GGone.API.Models.AI;
+using GGone.API.Models.Diets;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GGone.API.Controllers
@@ -16,28 +17,22 @@ namespace GGone.API.Controllers
             _aiChatService = aiChatService;
         }
 
-        [HttpPost("ask")]
-        public async Task<IActionResult> Ask([FromBody] AIChatRequest request)
+        [HttpPost("Ask")]
+        public async Task<BaseResponse<AIChatResponse>> Ask(AIChatRequest request)
         {
-            var result = await _aiChatService.GetAiReply(request);
-
-            if (result.Success)
-                return Ok(result);
-
-            return BadRequest(result);
+            return await _aiChatService.GetAiReply(request);
         }
 
-        [HttpGet("test-gemini-key")]
-        public IActionResult TestGeminiKey([FromServices] IConfiguration config)
+        [HttpPost("GenerateWeeklyDietPlan")]
+        public async Task<BaseResponse<WeeklyDietPlan>> GenerateWeeklyDietPlan()
         {
-            var key = config["GeminiSettings:ApiKey"];
+            return await _aiChatService.GenerateWeeklyDietPlan();
+        }
 
-            return Ok(new
-            {
-                IsNull = key == null,
-                IsEmpty = string.IsNullOrEmpty(key),
-                Length = key?.Length
-            });
+        [HttpGet("GetUserDietPlan")]
+        public async Task<BaseResponse<WeeklyDietPlan>> GetUserDietPlan()
+        {
+            return await _aiChatService.GetUserDietPlan();
         }
     }
 }
