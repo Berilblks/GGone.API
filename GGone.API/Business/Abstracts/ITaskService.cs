@@ -6,8 +6,9 @@ namespace GGone.API.Business.Abstracts
 {
     public interface ITaskService
     {
-        Task<BaseResponse<List<DailyTaskResponse>>> GetTodayTasks();
-        Task<BaseResponse<bool>> ToggleTaskCompletion(ToggleCompletionRequest request);
+        Task<BaseResponse<List<DailyTaskResponse>>> GetTodayTasks(int userId);
+        Task<BaseResponse<bool>> ToggleTaskCompletion(ToggleCompletionRequest request, int userId);
+
 
         Task<TaskItem> CheckAndAwardBadges(string taskId);
     }

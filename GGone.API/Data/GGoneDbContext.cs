@@ -30,6 +30,8 @@ namespace GGone.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(GGoneDbContext).Assembly);
+
             // Arkadaşlık tablosu için döngüsel silme engelleme yapılandırması
             modelBuilder.Entity<Friendship>()
                 .HasOne(f => f.User)

@@ -5,7 +5,7 @@ namespace GGone.API.Models.Tasks
     public class ToggleCompletionRequest
     {
         [Required]
-        public required string TaskId { get; set; }
+        public required int TaskId { get; set; }
 
         [Required]
         public bool IsCompleted { get; set; }
