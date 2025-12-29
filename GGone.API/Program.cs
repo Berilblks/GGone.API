@@ -4,6 +4,7 @@ using GGone.API.Business.Services.AI;
 using GGone.API.Business.Services.Auth;
 using GGone.API.Business.Services.BMI;
 using GGone.API.Business.Services.Exercises;
+using GGone.API.Business.Services.Friends;
 using GGone.API.Business.Services.Tasks;
 using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,8 @@ builder.Services.AddHttpClient<IAIChatService, GeminiChatService>();
 
 builder.Services.AddControllers().AddJsonOptions(x =>
    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+builder.Services.AddScoped<IFriendService, FriendService>();
 
 
 var app = builder.Build();

@@ -211,7 +211,7 @@ namespace GGone.API.Business.Services.AI
 
                     return new BaseResponse<WeeklyDietPlan> { Success = true, Data = dietPlan };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Diyet planı getirilirken hata oluştu." };
             }
