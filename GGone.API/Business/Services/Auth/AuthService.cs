@@ -18,12 +18,14 @@ namespace GGone.API.Business.Services.Auth
         private readonly IConfiguration _config;
         private readonly GGoneDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
-        public AuthService(GGoneDbContext context, IConfiguration config, IMapper mapper)
+        public AuthService(GGoneDbContext context, IConfiguration config, IMapper mapper, IEmailService emailService)
         {
             _config = config;
             _context = context;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         // LOGIN işlemleri
@@ -72,7 +74,7 @@ namespace GGone.API.Business.Services.Auth
 
             var createdUser = _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            response.Data = _mapper.Map<RegisterResponse>(createdUser.Entity);
+            response.Success = true;
 
             return response;
             
@@ -208,6 +210,108 @@ namespace GGone.API.Business.Services.Auth
 
             return response;
 
+        }
+
+        public async Task<BaseResponse<SendVerificationCodeResponse>> SendVerificationCode(SendVerificationCodeRequest request)
+        {
+            BaseResponse<SendVerificationCodeResponse> response = new();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                // Security: Don't reveal if email exists, just return success or generic message.
+                // However, generally for UX we might say "User not found" or handle gracefully.
+                // Given the existing pattern in this app returns "User not found", I will stick to it for consistency.
+                response.Error = "User not found.";
+                response.ErrorCode = (int)ErrorCode.UserNotFound;
+                return response;
+            }
+
+            // Generate 6 digit code
+            var random = new Random();
+            var code = random.Next(100000, 999999).ToString();
+
+            user.ResetPasswordToken = code;
+            user.ResetPasswordExpires = DateTime.Now.AddMinutes(15); // Valid for 15 minutes
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            // Send Email
+            var emailBody = $"<h3>Your Verification Code</h3><p>Use the following code to reset your password: <b>{code}</b></p><p>This code is valid for 15 minutes.</p>";
+            
+            try 
+            {
+                Console.WriteLine($"[Email Service] Sending verification code to {user.Email}...");
+                await _emailService.SendEmailAsync(user.Email, "Reset Password Verification Code", emailBody);
+                Console.WriteLine("[Email Service] Email sent successfully.");
+
+                response.Success = true; // Explicitly set success
+                response.Data = new SendVerificationCodeResponse
+                {
+                    IsSuccess = true,
+                    Message = "Verification code sent to your email."
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Email Service] ERROR: Failed to send email. Details: {ex.Message}");
+                Console.WriteLine($"[Email Service] StackTrace: {ex.StackTrace}");
+                
+                response.Success = false;
+                response.Error = "Failed to send email. Check backend logs for details. Error: " + ex.Message;
+                response.ErrorCode = 500;
+                // In production, log the exception
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<ResetPasswordResponse>> ResetPassword(ResetPasswordRequest request)
+        {
+            BaseResponse<ResetPasswordResponse> response = new();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                response.Error = "User not found.";
+                response.ErrorCode = (int)ErrorCode.UserNotFound;
+                return response;
+            }
+
+            // Verify Code
+            if (user.ResetPasswordToken != request.Code)
+            {
+                response.Error = "Invalid verification code.";
+                response.ErrorCode = (int)ErrorCode.WrongPassword; // Or specific error code
+                return response;
+            }
+
+            // Verify Expiration
+            if (user.ResetPasswordExpires < DateTime.Now)
+            {
+                response.Error = "Verification code expired.";
+                response.ErrorCode = (int)ErrorCode.UserNotFound; // Or specific error code
+                return response;
+            }
+
+            CreatePasswordHash(request.NewPassword, out byte[] newHash, out byte[] newSalt);
+
+            user.PasswordHash = newHash;
+            user.PasswordSalt = newSalt;
+            user.ResetPasswordToken = null; // Clear token after use
+            user.ResetPasswordExpires = null;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            response.Data = new ResetPasswordResponse
+            {
+                IsSuccess = true,
+                Message = "Your password has been reset successfully."
+            };
+
+            return response;
         }
     }
 }

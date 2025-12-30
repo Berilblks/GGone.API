@@ -41,5 +41,16 @@ namespace GGone.API.Controllers
             return await _authService.ForgetPassword(request);
         }
 
+        [HttpPost("SendVerificationCode")]
+        public async Task<BaseResponse<SendVerificationCodeResponse>> SendVerificationCode(SendVerificationCodeRequest request)
+        {
+            return await _authService.SendVerificationCode(request);
+        }
+
+        [HttpPost("ResetPassword")]
+        public async Task<BaseResponse<ResetPasswordResponse>> ResetPassword(ResetPasswordRequest request)
+        {
+            return await _authService.ResetPassword(request);
+        }
     }
 }

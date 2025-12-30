@@ -2,6 +2,6 @@
 {
     public class RegisterResponse
     {
-        public int Id { get; set; }
+        public bool Success { get; set; }
     }
 }

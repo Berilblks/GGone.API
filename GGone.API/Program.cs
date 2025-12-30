@@ -1,4 +1,5 @@
 using GGone.API.Business.Abstracts;
+using GGone.API.Business.Services;
 using GGone.API.Business.Services.Addiction;
 using GGone.API.Business.Services.AI;
 using GGone.API.Business.Services.Auth;
@@ -97,6 +98,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddScoped<IFriendService, FriendService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 
 var app = builder.Build();
