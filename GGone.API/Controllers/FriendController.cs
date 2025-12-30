@@ -7,6 +7,7 @@ namespace GGone.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class FriendController : ControllerBase
     {
         private readonly IFriendService _friendService;

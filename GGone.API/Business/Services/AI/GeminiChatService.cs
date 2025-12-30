@@ -22,7 +22,7 @@ namespace GGone.API.Business.Services.AI
 
         public GeminiChatService(IConfiguration configuration, HttpClient httpClient, IBmiService bmiService, ICurrentUserService currentUserService, IMapper mapper, GGoneDbContext context)
         {
-            _apiKey = configuration["GeminiSettings:ApiKey"]
+            _apiKey = configuration["GeminiApiKey"]
                 ?? throw new Exception("Gemini API Key bulunamadı!");
             _httpClient = httpClient;
             _bmiService = bmiService;

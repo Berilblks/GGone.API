@@ -8,6 +8,7 @@ namespace GGone.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class AIChatController : ControllerBase
     {
         private readonly IAIChatService _aiChatService;

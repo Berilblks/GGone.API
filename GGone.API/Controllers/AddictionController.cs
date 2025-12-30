@@ -9,6 +9,7 @@ namespace GGone.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class AddictionController : ControllerBase
     {
         private readonly IAddictionService _addictionService;

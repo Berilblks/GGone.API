@@ -6,5 +6,8 @@ namespace GGone.API.Business.Abstracts
     {
         Task<BmiResponse> CalculateAndSaveAsync(CreateBmiRequest request);
         Task<BmiResponse?> GetLatestBmiByUserId(int userId);
+        Task<List<BmiResponse>> GetBmiHistory();
+        Task<int> GetUserStreak();
+
     }
 }

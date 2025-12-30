@@ -7,6 +7,7 @@ namespace GGone.API.Controllers
     // localhost:5001/api/GGone
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class GGoneController : ControllerBase
     {
         public GGoneController(GGoneDbContext dbContext) 

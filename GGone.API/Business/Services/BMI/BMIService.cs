@@ -42,6 +42,18 @@ namespace GGone.API.Business.Services.BMI
             return response;
         }
 
+        public async Task<List<BmiResponse>> GetBmiHistory()
+        {
+            var userId = _currentUserService.UserId; 
+
+            var records = await _context.UserHealthRecords
+                .Where(x => x.UserId == userId)
+                .OrderBy(x => x.CreatedAt) // Grafikte zaman dizini için sıralama önemlidir
+                .ToListAsync();
+
+            return _mapper.Map<List<BmiResponse>>(records); //
+        }
+
         public async Task<BmiResponse?> GetLatestBmiByUserId(int userId)
         {
             var latestRecord = await _context.UserHealthRecords
@@ -56,6 +68,80 @@ namespace GGone.API.Business.Services.BMI
             response.Status = BmiRules.GetStatus(latestRecord.BmiResult);
 
             return response;
+        }
+
+        public async Task<int> GetUserStreak()
+        {
+            var userId = _currentUserService.UserId; 
+
+            // Kullanıcının benzersiz kayıt tarihlerini alıyoruz
+            var dates = await _context.UserHealthRecords
+                .Where(x => x.UserId == userId) 
+                .OrderByDescending(x => x.CreatedAt) 
+                .Select(x => x.CreatedAt.Date)
+                .Distinct()
+                .ToListAsync();
+
+            if (!dates.Any()) return 0;
+
+            int streak = 0;
+            DateTime compareDate = DateTime.Now.Date;
+
+            // Eğer bugün kayıt yoksa, düne bakarak başla (streak bozulmasın diye)
+            if (dates[0] != compareDate && dates[0] != compareDate.AddDays(-1))
+                return 0;
+
+            if (dates[0] == compareDate.AddDays(-1))
+                compareDate = compareDate.AddDays(-1);
+
+            foreach (var date in dates)
+            {
+                if (date == compareDate)
+                {
+                    streak++;
+                    compareDate = compareDate.AddDays(-1);
+                }
+                else break;
+            }
+            return streak;
+        }
+
+        public async Task<int> GetUserStreakAsync()
+        {
+            var userId = _currentUserService.UserId;
+
+            // Kullanıcının benzersiz kayıt tarihlerini (sadece gün bazında) büyükten küçüğe çekiyoruz
+            var dates = await _context.UserHealthRecords
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => x.CreatedAt.Date)
+                .Distinct()
+                .ToListAsync();
+
+            if (!dates.Any()) return 0;
+
+            int streak = 0;
+            DateTime today = DateTime.Now.Date;
+            DateTime compareDate = today;
+
+            // Eğer bugün kayıt yoksa, streak bozulmuş olabilir mi? 
+            // Genelde streak dün kayıt varsa devam eder, bugün henüz girilmemiş olabilir.
+            if (dates[0] != today && dates[0] != today.AddDays(-1))
+                return 0;
+
+            foreach (var date in dates)
+            {
+                if (date == compareDate || date == compareDate.AddDays(-1))
+                {
+                    streak++;
+                    compareDate = date;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return streak;
         }
     }
 }

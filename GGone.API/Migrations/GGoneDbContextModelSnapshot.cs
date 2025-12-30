@@ -52,7 +52,7 @@ namespace GGone.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addictions");
+                    b.ToTable("Addictions", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Auth.User", b =>
@@ -101,7 +101,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.BMI.UserHealthRecord", b =>
@@ -136,7 +136,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserHealthRecords");
+                    b.ToTable("UserHealthRecords", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Diets.DietDay", b =>
@@ -169,7 +169,7 @@ namespace GGone.API.Migrations
 
                     b.HasIndex("WeeklyDietPlanId");
 
-                    b.ToTable("DietDays");
+                    b.ToTable("DietDays", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Diets.WeeklyDietPlan", b =>
@@ -188,7 +188,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WeeklyDietPlans");
+                    b.ToTable("WeeklyDietPlans", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Exercises.Exercise", b =>
@@ -242,7 +242,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Exercises");
+                    b.ToTable("Exercises", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Friends.Friendship", b =>
@@ -271,7 +271,7 @@ namespace GGone.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Friendships");
+                    b.ToTable("Friendships", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Tasks.DailyTaskLog", b =>
@@ -294,7 +294,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DailyTaskLogs");
+                    b.ToTable("DailyTaskLogs", (string)null);
                 });
 
             modelBuilder.Entity("GGone.API.Models.Tasks.TaskItem", b =>
@@ -333,7 +333,7 @@ namespace GGone.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TaskItems");
+                    b.ToTable("TaskItems", (string)null);
 
                     b.HasData(
                         new

@@ -4,6 +4,7 @@ using GGone.API.Models.BMI;
 using GGone.API.Models.Diets;
 using GGone.API.Models.Exercises;
 using GGone.API.Models.Friends;
+using GGone.API.Models.Progress;
 using GGone.API.Models.Tasks;
 using Microsoft.EntityFrameworkCore;
 

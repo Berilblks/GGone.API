@@ -6,6 +6,7 @@ namespace GGone.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class DataSyncController : ControllerBase
     {
         private readonly IExerciseDataFetcher _dataFetcher;

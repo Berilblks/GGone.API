@@ -7,6 +7,7 @@ namespace GGone.API.Controllers
 {
     [ApiController] 
     [Route("api/[controller]")] 
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class BmiController : ControllerBase
     {
         private readonly IBmiService _bmiService;
@@ -41,6 +42,34 @@ namespace GGone.API.Controllers
             {
                 // 4. Hata durumunda loglama yapılabilir ve hata mesajı dönülür
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetBmiHistory()
+        {
+            var result = await _bmiService.GetBmiHistory();
+
+            if (result == null || !result.Any())
+                return NotFound("Henüz kilo kaydı bulunamadı.");
+
+            return Ok(result);
+        }
+
+        [HttpGet("streak")]
+        public async Task<IActionResult> GetUserStreak()
+        {
+            try
+            {
+                // 1. Servis üzerinden hesaplanan streak sayısını al
+                var streakCount = await _bmiService.GetUserStreak();
+
+                // 2. Başarılı şekilde Flutter'a dön
+                return Ok(new { streakCount = streakCount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Streak hesaplanırken bir hata oluştu: {ex.Message}");
             }
         }
     }
