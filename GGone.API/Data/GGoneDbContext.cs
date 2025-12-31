@@ -6,6 +6,7 @@ using GGone.API.Models.Exercises;
 using GGone.API.Models.Friends;
 using GGone.API.Models.Progress;
 using GGone.API.Models.Tasks;
+using GGone.API.Models.AI;
 using Microsoft.EntityFrameworkCore;
 
 namespace GGone.API.Data
@@ -25,6 +26,7 @@ namespace GGone.API.Data
         public DbSet<UserHealthRecord> UserHealthRecords { get; set; }
         public DbSet<DietDay> DietDays { get; set; }
         public DbSet<WeeklyDietPlan> WeeklyDietPlans { get; set; }
+        public DbSet<ChatHistory> ChatHistories { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -4,8 +4,8 @@
     {
         public static string Build(string userMessage, double? bmi, string goal)
         {
-            return $"[Kullanıcı Bilgisi: BMI: {bmi ?? 0}, Hedef: {goal}]\n" +
-                $"[Soru]: {userMessage}";
+            return $"[User Info: BMI: {bmi ?? 0}, Goal: {goal}]\n" +
+                $"[Question]: {userMessage}";
         }
     }
 }

@@ -39,102 +39,113 @@ namespace GGone.API.Business.Services.AI
         {
             try
             {
-                // Kullanıcı & BMI bilgisi
                 var userId = _currentUserService.UserId;
                 var lastBmi = await _bmiService.GetLatestBmiByUserId();
-
                 double bmiValue = lastBmi?.BmiResult ?? 0;
 
                 string userMessage = string.IsNullOrWhiteSpace(request.Message)
-                    ? "Kilo vermek istiyorum"
+                    ? "I want to lose weight"
                     : request.Message;
 
-                // Prompt oluştur
-                string fullPrompt =
-                    SystemPrompts.CoachRole +
-                    "\n\n" +
-                    UserContextBuilder.Build(
-                        userMessage,
-                        bmiValue,
-                        "Kilo Vermek"
-                    );
+                // 1. Kullanıcı mesajını kaydet
+                var userHistory = new ChatHistory
+                {
+                    UserId = userId,
+                    Role = "user",
+                    Message = userMessage,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ChatHistories.Add(userHistory);
+                await _context.SaveChangesAsync();
 
-                // Gemini payload 
+                // 2. Geçmiş mesajları getir (Son 30 mesaj)
+                var history = await _context.ChatHistories
+                    .Where(x => x.UserId == userId)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Take(30)
+                    .OrderBy(x => x.CreatedAt)
+                    .ToListAsync();
+
+                // 3. Payload oluştur
+                var contents = new List<object>();
+
+                foreach (var item in history)
+                {
+                    string textToSend = item.Message;
+
+                    // Son mesaj ise (yani şu anki istek ise) bağlamı ekle
+                    if (item == userHistory)
+                    {
+                        textToSend = UserContextBuilder.Build(item.Message, bmiValue, "Lose Weight");
+                    }
+
+                    contents.Add(new
+                    {
+                        role = item.Role,
+                        parts = new[] { new { text = textToSend } }
+                    });
+                }
+
                 var payload = new
                 {
-                    contents = new[]
+                    system_instruction = new
                     {
-                        new
-                        {
-                            parts = new[]
-                            {
-                                new { text = fullPrompt }
-                            }
-                        }
-                    }
+                        parts = new[] { new { text = SystemPrompts.CoachRole } }
+                    },
+                    contents = contents.ToArray()
                 };
 
-                // Gemini API çağrısı
+                // 4. API Çağrısı
                 var response = await _httpClient.PostAsJsonAsync(
                     $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={_apiKey}",
                     payload
                 );
 
-
-
-
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorJson = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"GOOGLE HATA DETAYI: {errorJson}");
-
                     return new BaseResponse<AIChatResponse> { Success = false, Message = "Google hatası: " + response.StatusCode };
                 }
 
-                // Response parse
                 var json = await response.Content.ReadAsStringAsync();
-
                 using var doc = JsonDocument.Parse(json);
 
                 string aiText;
-
                 try
                 {
-                    aiText = doc
-                        .RootElement
+                    aiText = doc.RootElement
                         .GetProperty("candidates")[0]
                         .GetProperty("content")
                         .GetProperty("parts")[0]
                         .GetProperty("text")
-                        .GetString()
-                        ?? "Şu an net bir yanıt üretemedim.";
+                        .GetString() ?? "Şu an net bir yanıt üretemedim.";
                 }
                 catch
                 {
-                    Console.WriteLine("Gemini boş veya hatalı response döndü:");
-                    Console.WriteLine(json);
-
-                    aiText = "Şu an yanıt üretilemedi. Lütfen tekrar deneyin.";
+                    aiText = "Şu an yanıt üretilemedi.";
                 }
+
+                // 5. AI cevabını kaydet
+                var aiHistory = new ChatHistory
+                {
+                    UserId = userId,
+                    Role = "model",
+                    Message = aiText,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ChatHistories.Add(aiHistory);
+                await _context.SaveChangesAsync();
 
                 return new BaseResponse<AIChatResponse>
                 {
                     Success = true,
-                    Data = new AIChatResponse
-                    {
-                        Reply = aiText
-                    }
+                    Data = new AIChatResponse { Reply = aiText }
                 };
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GeminiChatService Exception: {ex.Message}");
-
-                return new BaseResponse<AIChatResponse>
-                {
-                    Success = false,
-                    Message = "Beklenmeyen bir hata oluştu."
-                };
+                return new BaseResponse<AIChatResponse> { Success = false, Message = "Hata oluştu: " + ex.Message };
             }
         }
 
