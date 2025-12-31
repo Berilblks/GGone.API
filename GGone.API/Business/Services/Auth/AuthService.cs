@@ -94,7 +94,7 @@ namespace GGone.API.Business.Services.Auth
         {
             var claims = new List<Claim>
             {
-                new("UserId", user.Id.ToString()),
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email, user.Email),
             };
 

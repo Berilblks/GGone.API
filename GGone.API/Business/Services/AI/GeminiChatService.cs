@@ -41,7 +41,7 @@ namespace GGone.API.Business.Services.AI
             {
                 // Kullanıcı & BMI bilgisi
                 var userId = _currentUserService.UserId;
-                var lastBmi = await _bmiService.GetLatestBmiByUserId(userId);
+                var lastBmi = await _bmiService.GetLatestBmiByUserId();
 
                 double bmiValue = lastBmi?.BmiResult ?? 0;
 
@@ -143,7 +143,7 @@ namespace GGone.API.Business.Services.AI
             try
             {
                 var userId = _currentUserService.UserId;
-                var lastBmi = await _bmiService.GetLatestBmiByUserId(userId);
+                var lastBmi = await _bmiService.GetLatestBmiByUserId();
 
                 string dietPrompt = $"BMI: {lastBmi?.BmiResult ?? 25}. 7 günlük diyet listesini SADECE JSON olarak hazırla. " +
                             "JSON yapısı 'Days' listesinden oluşmalı ve her gün 'DayName', 'Breakfast', 'Lunch', 'Dinner', 'Snacks' içermeli.";

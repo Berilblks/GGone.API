@@ -19,11 +19,10 @@ namespace GGone.API.Controllers
             _currentUserService = currentUserService;
         }
 
-        /// Gets today's tasks for the current user
         [HttpGet("today")]
         public async Task<ActionResult<BaseResponse<List<DailyTaskResponse>>>> GetTodayTasks()
         {
-            var response = await _taskService.GetTodayTasks(_currentUserService.UserId);
+            var response = await _taskService.GetTodayTasks();
             return response.Success ? Ok(response) : BadRequest(response);
         }
 
@@ -36,7 +35,7 @@ namespace GGone.API.Controllers
                 return BadRequest(BaseResponse<bool>.Fail("Geçersiz veri."));
 
             // Servis metodu hem request hem de UserId bekliyordu
-            var response = await _taskService.ToggleTaskCompletion(request, _currentUserService.UserId);
+            var response = await _taskService.ToggleTaskCompletion(request);
 
             return response.Success ? Ok(response) : BadRequest(response);
         }

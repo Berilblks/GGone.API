@@ -12,11 +12,13 @@ namespace GGone.API.Business.Services.Addiction
     {
         private readonly GGoneDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AddictionService(GGoneDbContext context, IMapper mapper)
+        public AddictionService(GGoneDbContext context, IMapper mapper, ICurrentUserService currentUserService)
         {
             _context = context;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         // Kullanıcının belirli bir bağımlılığı eklemesini sağlar
@@ -25,8 +27,9 @@ namespace GGone.API.Business.Services.Addiction
         {
             try
             {
+                var userId = _currentUserService.UserId;
                 var existingAddiction = await _context.Addictions
-                    .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.AddictionType == request.Type); // request.UserId kullanıldı
+                    .FirstOrDefaultAsync(a => a.UserId == userId && a.AddictionType == request.Type);
 
                 if (existingAddiction != null)
                 {
@@ -38,6 +41,7 @@ namespace GGone.API.Business.Services.Addiction
                 else
                 {
                     existingAddiction = _mapper.Map<Models.Addiction.Addiction>(request);
+                    existingAddiction.UserId = userId; // Set UserId explicitly
                     existingAddiction.LastConsumptionDate = DateTime.UtcNow;
                     _context.Addictions.Add(existingAddiction);
                 }
@@ -57,8 +61,9 @@ namespace GGone.API.Business.Services.Addiction
         {
             try
             {
+                var userId = _currentUserService.UserId;
                 var addictions = await _context.Addictions
-                    .Where(a => a.UserId == request.UserId)
+                    .Where(a => a.UserId == userId)
                     .ToListAsync();
 
                 return new BaseResponse<List<Models.Addiction.Addiction>> { Success = true, Data = addictions };
@@ -74,8 +79,9 @@ namespace GGone.API.Business.Services.Addiction
         {
             try
             {
+                var userId = _currentUserService.UserId;
                 var addiction = await _context.Addictions
-                    .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.AddictionType == request.Type);
+                    .FirstOrDefaultAsync(a => a.UserId == userId && a.AddictionType == request.Type);
 
                 if (addiction == null)
                 {
@@ -100,8 +106,9 @@ namespace GGone.API.Business.Services.Addiction
         // 4. GetDependencyCounterAsync (Güncellendi)
         public async Task<BaseResponse<CounterResponse>> GetDependencyCounterAsync(GetCounterRequest request)
         {
+            var userId = _currentUserService.UserId;
             var addiction = await _context.Addictions
-                .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.AddictionType == request.Type);
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.AddictionType == request.Type);
 
             if (addiction == null)
             {
@@ -110,7 +117,7 @@ namespace GGone.API.Business.Services.Addiction
                     Success = true, // Kayıt olmaması hata değil, veri yok demektir.
                     Data = new CounterResponse
                     {
-                        UserId = request.UserId,
+                        UserId = userId,
                         Type = request.Type,
                         DaysClean = 0,
                         QuitDate = DateTime.MinValue,
@@ -134,8 +141,9 @@ namespace GGone.API.Business.Services.Addiction
         {
             try
             {
+                var userId = _currentUserService.UserId;
                 var hasRecord = await _context.Addictions
-                    .AnyAsync(r => r.UserId == request.UserId);
+                    .AnyAsync(r => r.UserId == userId);
 
                 return new BaseResponse<bool> { Success = true, Data = hasRecord };
             }

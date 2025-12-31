@@ -13,11 +13,13 @@ namespace GGone.API.Business.Services.Tasks
     {
         private readonly GGoneDbContext _context; // Veritabanı bağlamınız
         private readonly IMapper _mapper;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TaskService(GGoneDbContext context, IMapper mapper)
+        public TaskService(GGoneDbContext context, IMapper mapper, ICurrentUserService currentUserService)
         {
             _context = context;
             _mapper = mapper;
+            _currentUserService = currentUserService;
         }
 
         public async Task<TaskItem> CheckAndAwardBadges(string taskId)
@@ -26,10 +28,11 @@ namespace GGone.API.Business.Services.Tasks
             return null;
         }
 
-        public async Task<BaseResponse<List<DailyTaskResponse>>> GetTodayTasks(int UserId)
+        public async Task<BaseResponse<List<DailyTaskResponse>>> GetTodayTasks()
         {
+            var userId = _currentUserService.UserId;
             // Kullanıcının bağımlılık bilgilerini çek (Örnek: Alkol mü Sigara mı?)
-            var userAddiction = await _context.Addictions.FirstOrDefaultAsync(a => a.UserId == UserId);
+            var userAddiction = await _context.Addictions.FirstOrDefaultAsync(a => a.UserId == userId);
 
             // Tüm aktif görevleri getir
             var allTasks = await _context.TaskItems.Where(x => x.IsActive).ToListAsync();
@@ -50,7 +53,7 @@ namespace GGone.API.Business.Services.Tasks
 
             // Logları kontrol et ve Map yap
             var today = DateTime.UtcNow.Date;
-            var log = await _context.DailyTaskLogs.FirstOrDefaultAsync(x => x.Date.Date == today && x.UserId == UserId); 
+            var log = await _context.DailyTaskLogs.FirstOrDefaultAsync(x => x.Date.Date == today && x.UserId == userId); 
 
             var response = _mapper.Map<List<DailyTaskResponse>>(filteredTasks);
 
@@ -65,8 +68,9 @@ namespace GGone.API.Business.Services.Tasks
             return BaseResponse<List<DailyTaskResponse>>.Ok(response);
         }
 
-        public async Task<BaseResponse<bool>> ToggleTaskCompletion(ToggleCompletionRequest request, int userId)
+        public async Task<BaseResponse<bool>> ToggleTaskCompletion(ToggleCompletionRequest request)
         {
+            var userId = _currentUserService.UserId;
             var today = DateTime.UtcNow.Date;
 
             var log = await _context.DailyTaskLogs

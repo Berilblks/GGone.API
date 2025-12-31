@@ -54,8 +54,9 @@ namespace GGone.API.Business.Services.BMI
             return _mapper.Map<List<BmiResponse>>(records); //
         }
 
-        public async Task<BmiResponse?> GetLatestBmiByUserId(int userId)
+        public async Task<BmiResponse?> GetLatestBmiByUserId()
         {
+            var userId = _currentUserService.UserId;
             var latestRecord = await _context.UserHealthRecords
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.CreatedAt)

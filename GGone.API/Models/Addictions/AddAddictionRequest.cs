@@ -4,7 +4,6 @@ namespace GGone.API.Models.Addictions
 {
     public class AddAddictionRequest
     {
-        public int UserId { get; set; }
         public AddictionType Type { get; set; }
         public double DailyConsumption { get; set; }
         public double UnitPrice { get; set; }
