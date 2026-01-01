@@ -7,7 +7,7 @@ namespace GGone.API.Mapping
     {
         public TaskProfile() {
             CreateMap<TaskItem, DailyTaskResponse>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TaskId))
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.IsCompleted, opt => opt.Ignore());
         }
     }
