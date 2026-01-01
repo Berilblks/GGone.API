@@ -67,10 +67,9 @@ namespace GGone.API.Business.Services.Friends
             var users = await _context.Users
                 .Where(u =>
                     u.Id != currentUserId &&
-                    (
-                        (!string.IsNullOrEmpty(u.Name) && u.Name.Contains(query)) ||
-                        (!string.IsNullOrEmpty(u.Surname) && u.Surname.Contains(query))
-                    )
+                (
+                    (!string.IsNullOrEmpty(u.FullName) && u.FullName.Contains(query))
+                )
                 )
                 .Take(10)
                 .ToListAsync();

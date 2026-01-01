@@ -19,13 +19,15 @@ namespace GGone.API.Business.Services.Auth
         private readonly GGoneDbContext _context;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AuthService(GGoneDbContext context, IConfiguration config, IMapper mapper, IEmailService emailService)
+        public AuthService(GGoneDbContext context, IConfiguration config, IMapper mapper, IEmailService emailService, ICurrentUserService currentUserService)
         {
             _config = config;
             _context = context;
             _mapper = mapper;
             _emailService = emailService;
+            _currentUserService = currentUserService;
         }
 
         // LOGIN işlemleri
@@ -312,6 +314,65 @@ namespace GGone.API.Business.Services.Auth
             };
 
             return response;
+        }
+        public async Task<BaseResponse<ProfileResponse>> GetProfile()
+        {
+            var userId = _currentUserService.UserId;
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                return new BaseResponse<ProfileResponse>
+                {
+                    Success = false,
+                    Error = "User not found.",
+                    ErrorCode = (int)ErrorCode.UserNotFound
+                };
+            }
+
+            var profileResponse = _mapper.Map<ProfileResponse>(user);
+
+            return new BaseResponse<ProfileResponse>
+            {
+                Success = true,
+                Data = profileResponse
+            };
+        }
+
+        public async Task<BaseResponse<ProfileResponse>> UpdateProfile(UpdateProfileRequest request)
+        {
+            var userId = _currentUserService.UserId;
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                return new BaseResponse<ProfileResponse>
+                {
+                    Success = false,
+                    Error = "User not found.",
+                    ErrorCode = (int)ErrorCode.UserNotFound
+                };
+            }
+
+            user.FullName = request.FullName;
+            user.Username = request.Username;
+            user.BirthDate = new DateOnly(request.BirthYear, request.BirthMonth, request.BirthDay);
+            user.Height = request.Height;
+            user.Weight = request.Weight;
+            user.Gender = request.Gender;
+            user.ProfilePhotoUrl = request.ProfilePhotoUrl;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            var profileResponse = _mapper.Map<ProfileResponse>(user);
+
+            return new BaseResponse<ProfileResponse>
+            {
+                Success = true,
+                Message = "Profile updated successfully.",
+                Data = profileResponse
+            };
         }
     }
 }

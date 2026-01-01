@@ -11,5 +11,7 @@ namespace GGone.API.Business.Abstracts
         Task<BaseResponse<ForgetPasswordResponse>> ForgetPassword(ForgetPasswordRequest request);
         Task<BaseResponse<SendVerificationCodeResponse>> SendVerificationCode(SendVerificationCodeRequest request);
         Task<BaseResponse<ResetPasswordResponse>> ResetPassword(ResetPasswordRequest request);
+        Task<BaseResponse<ProfileResponse>> GetProfile();
+        Task<BaseResponse<ProfileResponse>> UpdateProfile(UpdateProfileRequest request);
     }
 }

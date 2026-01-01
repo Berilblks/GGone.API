@@ -52,5 +52,18 @@ namespace GGone.API.Controllers
         {
             return await _authService.ResetPassword(request);
         }
+        [HttpGet("Profile")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<BaseResponse<ProfileResponse>> GetProfile()
+        {
+            return await _authService.GetProfile();
+        }
+
+        [HttpPut("UpdateProfile")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<BaseResponse<ProfileResponse>> UpdateProfile(UpdateProfileRequest request)
+        {
+            return await _authService.UpdateProfile(request);
+        }
     }
 }

@@ -6,9 +6,12 @@ namespace GGone.API.Models.Auth
     {
         [Key]
         public int Id { get; set; }
-        public string? Name { get; set; }
-        public string? Surname { get; set; }
+        public string? FullName { get; set; }
         public string? Username { get; set; }
+        public DateOnly BirthDate { get; set; }
+        public double Height { get; set; }
+        public double Weight { get; set; }
+        public string? Gender { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public byte[]? PasswordHash { get; set; }
