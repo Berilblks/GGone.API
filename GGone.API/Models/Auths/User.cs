@@ -18,8 +18,11 @@ namespace GGone.API.Models.Auth
         public byte[]? PasswordSalt { get; set; }
         public string? ResetPasswordToken { get; set; }
         public DateTime? ResetPasswordExpires { get; set; }
-        public string? ProfilePhotoUrl { get; set; }
+        public string? ProfilePhoto { get; set; }
         public int ActiveDays { get; set; }
         public DateOnly LastLoginDate { get; set; }
+
+        public string? DeleteAccountToken { get; set; }
+        public DateTime? DeleteAccountExpires { get; set; }
     }
 }

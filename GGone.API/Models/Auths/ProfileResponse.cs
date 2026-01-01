@@ -10,6 +10,6 @@ namespace GGone.API.Models.Auth
         public double Height { get; set; }
         public double Weight { get; set; }
         public string? Gender { get; set; }
-        public string? ProfilePhotoUrl { get; set; }
+        public string? ProfilePhoto { get; set; }
     }
 }

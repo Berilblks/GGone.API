@@ -13,5 +13,7 @@ namespace GGone.API.Business.Abstracts
         Task<BaseResponse<ResetPasswordResponse>> ResetPassword(ResetPasswordRequest request);
         Task<BaseResponse<ProfileResponse>> GetProfile();
         Task<BaseResponse<ProfileResponse>> UpdateProfile(UpdateProfileRequest request);
+        Task<BaseResponse<string>> RequestDeleteAccount();
+        Task<BaseResponse<string>> ConfirmDeleteAccount(ConfirmDeleteRequest request);
     }
 }

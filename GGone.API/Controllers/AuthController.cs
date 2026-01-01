@@ -65,5 +65,19 @@ namespace GGone.API.Controllers
         {
             return await _authService.UpdateProfile(request);
         }
+
+        [HttpPost("RequestDeleteAccount")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<BaseResponse<string>> RequestDeleteAccount()
+        {
+            return await _authService.RequestDeleteAccount();
+        }
+
+        [HttpDelete("ConfirmDeleteAccount")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<BaseResponse<string>> ConfirmDeleteAccount(ConfirmDeleteRequest request)
+        {
+            return await _authService.ConfirmDeleteAccount(request);
+        }
     }
 }

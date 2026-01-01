@@ -142,8 +142,8 @@ namespace GGone.API.Business.Services.Auth
         {
             BaseResponse<ChangePasswordResponse> response = new();
 
-            // Kullanıcıyı ID ile bulma
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == request.Id);
+            // Kullanıcıyı Email ile bulma
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
 
             if (user == null)
             {
@@ -360,7 +360,7 @@ namespace GGone.API.Business.Services.Auth
             user.Height = request.Height;
             user.Weight = request.Weight;
             user.Gender = request.Gender;
-            user.ProfilePhotoUrl = request.ProfilePhotoUrl;
+            user.ProfilePhoto = request.ProfilePhoto;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
@@ -373,6 +373,86 @@ namespace GGone.API.Business.Services.Auth
                 Message = "Profile updated successfully.",
                 Data = profileResponse
             };
+        }
+
+        public async Task<BaseResponse<string>> RequestDeleteAccount()
+        {
+            var userId = _currentUserService.UserId;
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                return new BaseResponse<string> { Success = false, Error = "User not found.", ErrorCode = (int)ErrorCode.UserNotFound };
+            }
+
+            // Generate Code
+            var code = new Random().Next(100000, 999999).ToString();
+            user.DeleteAccountToken = code;
+            user.DeleteAccountExpires = DateTime.Now.AddMinutes(15);
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            // Send Email
+            var emailBody = $"<h3>Account Deletion Request</h3><p>Use the following code to PERMANENTLY delete your account: <b>{code}</b></p><p>This code is valid for 15 minutes. If you did not request this, please ignore this email.</p>";
+            await _emailService.SendEmailAsync(user.Email, "Delete Account Verification Code", emailBody);
+
+            return new BaseResponse<string> { Success = true, Message = "Verification code sent to your email." };
+        }
+
+        public async Task<BaseResponse<string>> ConfirmDeleteAccount(ConfirmDeleteRequest request)
+        {
+            var userId = _currentUserService.UserId;
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                return new BaseResponse<string> { Success = false, Error = "User not found.", ErrorCode = (int)ErrorCode.UserNotFound };
+            }
+
+            if (user.DeleteAccountToken != request.Code)
+            {
+                return new BaseResponse<string> { Success = false, Error = "Invalid verification code.", ErrorCode = (int)ErrorCode.WrongPassword };
+            }
+
+            if (user.DeleteAccountExpires < DateTime.Now)
+            {
+                return new BaseResponse<string> { Success = false, Error = "Verification code expired.", ErrorCode = (int)ErrorCode.UserNotFound };
+            }
+
+            // --- CASCADE DELETE LOGIC ---
+            // Manually delete related data to ensure clean cleanup
+            
+            // 1. Friendships (UserId or FriendId)
+            var friendships = await _context.Friendships.Where(f => f.UserId == userId || f.FriendId == userId).ToListAsync();
+            _context.Friendships.RemoveRange(friendships);
+
+            // 2. Addictions
+            var addictions = await _context.Addictions.Where(a => a.UserId == userId).ToListAsync();
+            _context.Addictions.RemoveRange(addictions);
+
+            // 3. DailyTaskLogs
+            var logs = await _context.DailyTaskLogs.Where(l => l.UserId == userId).ToListAsync();
+            _context.DailyTaskLogs.RemoveRange(logs);
+
+            // 4. UserHealthRecords
+            var records = await _context.UserHealthRecords.Where(r => r.UserId == userId).ToListAsync();
+            _context.UserHealthRecords.RemoveRange(records);
+
+            // 5. ChatHistories
+            var chats = await _context.ChatHistories.Where(c => c.UserId == userId).ToListAsync();
+            _context.ChatHistories.RemoveRange(chats);
+
+            // 6. WeeklyDietPlans
+            var plans = await _context.WeeklyDietPlans.Where(p => p.UserId == userId).ToListAsync();
+            _context.WeeklyDietPlans.RemoveRange(plans);
+            
+            // Finally: Delete User
+            _context.Users.Remove(user);
+            
+            await _context.SaveChangesAsync();
+
+            return new BaseResponse<string> { Success = true, Message = "Account deleted successfully." };
         }
     }
 }
