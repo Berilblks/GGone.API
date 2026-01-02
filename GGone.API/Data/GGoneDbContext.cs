@@ -7,6 +7,7 @@ using GGone.API.Models.Friends;
 using GGone.API.Models.Progress;
 using GGone.API.Models.Tasks;
 using GGone.API.Models.AI;
+using GGone.API.Models.Badges;
 using Microsoft.EntityFrameworkCore;
 
 namespace GGone.API.Data
@@ -27,6 +28,7 @@ namespace GGone.API.Data
         public DbSet<DietDay> DietDays { get; set; }
         public DbSet<WeeklyDietPlan> WeeklyDietPlans { get; set; }
         public DbSet<ChatHistory> ChatHistories { get; set; }
+        public DbSet<UserBadge> UserBadges { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

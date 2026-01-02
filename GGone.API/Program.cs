@@ -7,6 +7,7 @@ using GGone.API.Business.Services.BMI;
 using GGone.API.Business.Services.Exercises;
 using GGone.API.Business.Services.Friends;
 using GGone.API.Business.Services.Tasks;
+using GGone.API.Business.Services.Badges;
 using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -99,6 +100,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
 
 
 var app = builder.Build();
