@@ -27,6 +27,7 @@ namespace GGone.API.Data
         public DbSet<UserHealthRecord> UserHealthRecords { get; set; }
         public DbSet<DietDay> DietDays { get; set; }
         public DbSet<WeeklyDietPlan> WeeklyDietPlans { get; set; }
+        public DbSet<DietPlan> DietPlans { get; set; }
         public DbSet<ChatHistory> ChatHistories { get; set; }
         public DbSet<UserBadge> UserBadges { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
