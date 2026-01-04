@@ -6,5 +6,7 @@
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public List<DietDay> Days { get; set; } = new();
+        public bool IsActive { get; set; } = true;
+        public int WeekNumber { get; set; } = 1;
     }
 }

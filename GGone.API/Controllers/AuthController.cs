@@ -10,10 +10,45 @@ namespace GGone.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly GGone.API.Data.GGoneDbContext _context;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, GGone.API.Data.GGoneDbContext context)
         {
             _authService = authService;
+            _currentUserService = currentUserService;
+            _context = context;
+        }
+
+        [HttpPost("UpdateWeight")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<BaseResponse<string>> UpdateWeight(GGone.API.Models.Progress.UpdateWeightRequest request)
+        {
+            try 
+            {
+                var userId = _currentUserService.UserId;
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null) return new BaseResponse<string> { Success = false, Message = "User not found" };
+
+                // 1. Add to history
+                var history = new GGone.API.Models.Progress.WeightHistory
+                {
+                    UserId = userId,
+                    Weight = request.NewWeight,
+                    Date = DateTime.UtcNow
+                };
+                _context.WeightHistories.Add(history);
+
+                // 2. Update current weight
+                user.Weight = request.NewWeight;
+                await _context.SaveChangesAsync();
+
+                return new BaseResponse<string> { Success = true, Message = "Weight updated successfully." };
+            }
+            catch(Exception ex)
+            {
+                return new BaseResponse<string> { Success = false, Message = "Update failed: " + ex.Message };
+            }
         }
 
         [HttpPost("Register")]

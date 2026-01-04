@@ -11,6 +11,7 @@ namespace GGone.API.Models.Auth
         public DateOnly BirthDate { get; set; }
         public double Height { get; set; }
         public double Weight { get; set; }
+        public double TargetWeight { get; set; }
         public string? Gender { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }

@@ -79,5 +79,11 @@ namespace GGone.API.Controllers
 
             return new BaseResponse<DietPlan> { Success = true, Data = plan };
         }
+
+        [HttpGet("History")]
+        public async Task<BaseResponse<List<ChatHistoryDto>>> GetHistory()
+        {
+            return await _aiChatService.GetChatHistory();
+        }
     }
 }

@@ -31,6 +31,7 @@ namespace GGone.API.Data
         public DbSet<ChatHistory> ChatHistories { get; set; }
         public DbSet<UserBadge> UserBadges { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
+        public DbSet<WeightHistory> WeightHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

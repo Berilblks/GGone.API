@@ -9,5 +9,6 @@ namespace GGone.API.Business.Abstracts
         Task<BaseResponse<AIChatResponse>> GetAiReply(AIChatRequest request);
         Task<BaseResponse<WeeklyDietPlan>> GenerateWeeklyDietPlan();
         Task<BaseResponse<WeeklyDietPlan>> GetUserDietPlan();
+        Task<BaseResponse<List<ChatHistoryDto>>> GetChatHistory();
     }
 }

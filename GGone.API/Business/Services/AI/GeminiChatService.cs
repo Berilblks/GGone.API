@@ -23,7 +23,7 @@ namespace GGone.API.Business.Services.AI
         public GeminiChatService(IConfiguration configuration, HttpClient httpClient, IBmiService bmiService, ICurrentUserService currentUserService, IMapper mapper, GGoneDbContext context)
         {
             _apiKey = configuration["GeminiApiKey"]
-                ?? throw new Exception("Gemini API Key bulunamadı!");
+                ?? throw new Exception("Gemini API Key not found!");
             _httpClient = httpClient;
             _bmiService = bmiService;
             _currentUserService = currentUserService;
@@ -58,32 +58,35 @@ namespace GGone.API.Business.Services.AI
                 _context.ChatHistories.Add(userHistory);
                 await _context.SaveChangesAsync();
 
-                // 2. Geçmiş mesajları getir (Son 30 mesaj)
+                // 2. Geçmiş mesajları getir (Son 100 mesaj - Kullanıcı isteği ile artırıldı)
                 var history = await _context.ChatHistories
                     .Where(x => x.UserId == userId)
                     .OrderByDescending(x => x.CreatedAt)
-                    .Take(30)
+                    .Take(100)
                     .OrderBy(x => x.CreatedAt)
                     .ToListAsync();
 
-                // 3. Payload oluştur
+                // 3. Payload oluştur (Smart Windowing)
+                // Hedefimiz: Request Too Long hatası almamak için token/karakter sınırını aşmamak.
+                // En son mesajı kesinlikle ekle, geriye doğru kapasite yettikçe ekle.
+                
                 var contents = new List<object>();
 
                 var user = await _context.Users.FindAsync(userId);
                 int age = 0;
                 if(user != null)
                 {
-                    var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                    age = today.Year - user.BirthDate.Year;
-                    if (user.BirthDate > today.AddYears(-age)) age--;
+                   var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                   age = today.Year - user.BirthDate.Year;
+                   if (user.BirthDate > today.AddYears(-age)) age--;
                 }
 
-                // 2. Fetch Active Diet Plan (if exists)
+                // Calculate Last Message Context Size first
                 var currentDiet = await _context.WeeklyDietPlans
-                    .Include(d => d.Days)
-                    .Where(x => x.UserId == userId)
-                    .OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefaultAsync();
+                   .Include(d => d.Days)
+                   .Where(x => x.UserId == userId)
+                   .OrderByDescending(x => x.CreatedAt)
+                   .FirstOrDefaultAsync();
 
                 string? dietContext = null;
                 if (currentDiet != null)
@@ -91,27 +94,62 @@ namespace GGone.API.Business.Services.AI
                    dietContext = JsonSerializer.Serialize(currentDiet.Days, new JsonSerializerOptions { WriteIndented = false });
                 }
 
-                foreach (var item in history)
+                // Son mesajı oluştur (Context ile birlikte)
+                string lastMessageText = UserContextBuilder.Build(userHistory.Message, bmiValue, 
+                           user?.Weight ?? 0, 
+                           user?.Height ?? 0, 
+                           age, 
+                           user?.Gender ?? "Unknown",
+                           dietContext);
+
+                int currentTotalChars = lastMessageText.Length;
+                const int MAX_TOTAL_CHARS = 25000; // Güvenli sınır (Gemini Flash için token sınırı yüksek olsa da request body sınırı olabilir)
+
+                // Geriye doğru taranacak mesajlar (en sondan başa doğru bakıp sığanları alacağız)
+                // History listesi zaten eskiden yeniye sıralı olduğu için reverse yapıp sondan geriye gidelim.
+                var reversedHistory = history.OrderByDescending(x => x.CreatedAt).ToList();
+                var messagesToSend = new List<ChatHistory>();
+
+                // Şu anki kullanıcı mesajı zaten eklenecek, onu history'den değil manuel ekleyeceğiz.
+                // History'de şu anki mesaj yoksa (yukarıda veritabanına ekledikten sonra çektik mi? Evet 62. satırda çekiyoruz ama EF gecikmesi olabilir mi? 
+                // Kod akışına göre 58'de ekliyoruz, 62'de çekiyoruz. Yani history içinde userHistory de VAR.
+                // userHistory'yi zaten lastMessageText olarak özel hazırladık. O yüzden history listesinden onu exclude edip diğerlerine bakacağız.
+
+                foreach (var item in reversedHistory)
                 {
-                    string textToSend = item.Message;
+                    if (item.Id == userHistory.Id) continue; // Son mesajı atla, onu en son özel ekleyeceğiz.
 
-                    // Son mesaj ise (yani şu anki istek ise) bağlamı ekle
-                    if (item == userHistory)
+                    if (currentTotalChars + item.Message.Length < MAX_TOTAL_CHARS)
                     {
-                        textToSend = UserContextBuilder.Build(item.Message, bmiValue, 
-                            user?.Weight ?? 0, 
-                            user?.Height ?? 0, 
-                            age, 
-                            user?.Gender ?? "Unknown",
-                            dietContext);
+                        messagesToSend.Add(item);
+                        currentTotalChars += item.Message.Length;
                     }
-
-                    contents.Add(new
+                    else
                     {
-                        role = item.Role,
-                        parts = new[] { new { text = textToSend } }
-                    });
+                        // Sınır aşıldı, daha eski mesajları alma
+                        break; 
+                    }
                 }
+
+                // Mesajları tekrar kronolojik sıraya sok (Eskiden Yeniye)
+                messagesToSend.Reverse();
+
+                // Şimdi contents listesini doldur
+                foreach (var item in messagesToSend)
+                {
+                     contents.Add(new
+                     {
+                         role = item.Role,
+                         parts = new[] { new { text = item.Message } }
+                     });
+                }
+
+                // En son "şimdiki" mesajı ekle (Contextli haliyle)
+                contents.Add(new
+                {
+                    role = userHistory.Role,
+                    parts = new[] { new { text = lastMessageText } }
+                });
 
                 var payload = new
                 {
@@ -131,8 +169,8 @@ namespace GGone.API.Business.Services.AI
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorJson = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"GOOGLE HATA DETAYI: {errorJson}");
-                    return new BaseResponse<AIChatResponse> { Success = false, Message = "Google hatası: " + response.StatusCode };
+                    Console.WriteLine($"GOOGLE ERROR DETAIL: {errorJson}");
+                    return new BaseResponse<AIChatResponse> { Success = false, Message = "Google error: " + response.StatusCode };
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -146,11 +184,11 @@ namespace GGone.API.Business.Services.AI
                         .GetProperty("content")
                         .GetProperty("parts")[0]
                         .GetProperty("text")
-                        .GetString() ?? "Şu an net bir yanıt üretemedim.";
+                        .GetString() ?? "I cannot generate a clear response right now.";
                 }
                 catch
                 {
-                    aiText = "Şu an yanıt üretilemedi.";
+                    aiText = "Response could not be generated.";
                 }
 
                 // 5. AI cevabını kaydet
@@ -172,7 +210,7 @@ namespace GGone.API.Business.Services.AI
             }
             catch (Exception ex)
             {
-                return new BaseResponse<AIChatResponse> { Success = false, Message = "Hata oluştu: " + ex.Message };
+                return new BaseResponse<AIChatResponse> { Success = false, Message = "An error occurred: " + ex.Message };
             }
         }
 
@@ -192,14 +230,27 @@ namespace GGone.API.Business.Services.AI
                      .OrderBy(x => x.CreatedAt)
                      .ToListAsync();
 
+                // Get Weight History
+                var weightHistory = await _context.WeightHistories
+                    .Where(x => x.UserId == userId)
+                    .OrderBy(x => x.Date)
+                    .ToListAsync();
+                
+                double startWeight = weightHistory.FirstOrDefault()?.Weight ?? (await _context.Users.FindAsync(userId))?.Weight ?? 0;
+                double currentWeight = await _context.Users.Where(u => u.Id == userId).Select(u => u.Weight).FirstOrDefaultAsync();
+                double targetWeight = await _context.Users.Where(u => u.Id == userId).Select(u => u.TargetWeight).FirstOrDefaultAsync();
+                
+                // If target weight is 0 in DB, try to find it in chat history or use BMI logic
+                string weightProgression = $"Start: {startWeight}kg, Current: {currentWeight}kg, Target: {targetWeight}kg";
+
                 string conversationContext = string.Join("\n", history.Select(h => $"{h.Role}: {h.Message}"));
 
                 string dietPrompt = $"BMI: {lastBmi?.BmiResult ?? 25}.\n" +
+                            $"Weight Progression: {weightProgression}\n" +
                             $"Recent Conversation History (User Preferences):\n{conversationContext}\n\n" +
-                            "Based on the user's BMI, Current Weight (from context), Target Weight (from chat), and preferences above:\n" +
-                            "1. Identify the Target Weight and Estimated Duration discussed.\n" +
-                            "2. Prepare a 7-day diet plan consistent with this long-term goal (e.g. appropriate calorie deficit).\n" +
-                            "If the user specified Turkish language in the conversation, output the content in Turkish. Otherwise use their preferred language.\n" +
+                            "Based on the user's BMI, Weight Progression, and preferences above:\n" +
+                            "1. If weight is decreasing, encourage and adjust calories slightly if needed.\n" +
+                            "2. Prepare a 7-day diet plan consistent with the goal.\n" +
                             "Output ONLY JSON. " +
                             "JSON format must match this EXACT structure with NO markdown formatting: " +
                             "{ \"Days\": [ { \"DayName\": \"Monday\", \"Breakfast\": \"...\", \"Lunch\": \"...\", \"Dinner\": \"...\", \"Snacks\": \"...\" } ] }";
@@ -217,7 +268,7 @@ namespace GGone.API.Business.Services.AI
                 );
 
                 if (!response.IsSuccessStatusCode)
-                    return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Gemini API Hatası" };
+                    return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Gemini API Error" };
 
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
@@ -247,7 +298,7 @@ namespace GGone.API.Business.Services.AI
             }
             catch (Exception ex)
             {
-                return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Diyet oluşturulamadı: " + ex.Message };
+                return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Diet could not be created: " + ex.Message };
             }
         }
 
@@ -263,13 +314,36 @@ namespace GGone.API.Business.Services.AI
                     .FirstOrDefaultAsync(x => x.UserId == userId);
 
                 if (dietPlan == null)
-                    return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Henüz bir diyet planı oluşturulmamış." };
+                    return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "No diet plan created yet." };
 
                     return new BaseResponse<WeeklyDietPlan> { Success = true, Data = dietPlan };
             }
             catch (Exception)
             {
-                return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Diyet planı getirilirken hata oluştu." };
+                return new BaseResponse<WeeklyDietPlan> { Success = false, Message = "Error occurred while fetching diet plan." };
+            }
+        }
+        public async Task<BaseResponse<List<ChatHistoryDto>>> GetChatHistory()
+        {
+            try
+            {
+                var userId = _currentUserService.UserId;
+                var history = await _context.ChatHistories
+                    .Where(x => x.UserId == userId)
+                    .OrderBy(x => x.CreatedAt) // Oldest first
+                    .Select(x => new ChatHistoryDto
+                    {
+                        Message = x.Message,
+                        IsUser = x.Role == "user",
+                        Timestamp = x.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return new BaseResponse<List<ChatHistoryDto>> { Success = true, Data = history };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse<List<ChatHistoryDto>> { Success = false, Message = "Could not retrieve history: " + ex.Message };
             }
         }
     }

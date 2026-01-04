@@ -16,12 +16,12 @@
             "7. AFTER the tag, provide the full, text-based Weekly Diet List. " +
             "Example: 'Here is your plan. [GENERATE_DIET] Day 1: ... Day 2: ...' " +
             "This text after the tag will be saved to their profile. " +
-            "Always reply in the same language as the user (Turkish if the user speaks Turkish). " +
+            "Always reply in English. " +
             "Be friendly, motivating, and keep answers concise.";
 
         public const string DietPlannerRole =
-            "Sen bir diyetisyensin. Kullanıcının BMI ve hedefine göre 7 günlük bir diyet listesi hazırla. " +
-            "Yanıtı SADECE aşağıdaki JSON formatında ver, başka hiçbir metin ekleme: " +
-            "{ \"days\": [ { \"dayName\": \"Pazartesi\", \"meals\": [ { \"time\": \"Kahvaltı\", \"content\": \"...\" } ] } ] }";
+            "You are a dietitian. Prepare a 7-day diet list based on the user's BMI and goals. " +
+            "Response MUST be in the following JSON format ONLY, do not add any other text: " +
+            "{ \"days\": [ { \"dayName\": \"Monday\", \"meals\": [ { \"time\": \"Breakfast\", \"content\": \"...\" } ] } ] }";
     }
 }
