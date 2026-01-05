@@ -53,9 +53,12 @@ namespace GGone.API.Business.Services.Badges
              new() { Id = "phoenix_return", Name = "Phoenix", Description = "Complete a task after returning to the app following a 1-week break.", Icon = "🔥", Category = "Motivation" }
         };
 
-        public BadgeService(GGoneDbContext context)
+        private readonly ILevelService _levelService;
+
+        public BadgeService(GGoneDbContext context, ILevelService levelService)
         {
             _context = context;
+            _levelService = levelService;
         }
 
         public List<BadgeDefinition> GetAllBadgeDefinitions() => _definitions;
@@ -227,6 +230,12 @@ namespace GGone.API.Business.Services.Badges
             {
                 _context.UserBadges.AddRange(newBadges);
                 await _context.SaveChangesAsync();
+                
+                // XP Ödülü: Her rozet için 50 XP
+                foreach(var b in newBadges)
+                {
+                   await _levelService.AddXp(userId, 50, $"Badge Earned: {b.Name}");
+                }
             }
 
             return newBadges;

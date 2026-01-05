@@ -24,7 +24,7 @@ namespace GGone.API.Controllers
         }
 
         [HttpGet("Search")]
-        public async Task<BaseResponse<List<FriendResponse>>> Search([FromQuery] string q)
+        public async Task<BaseResponse<List<FriendResponse>>> Search([FromQuery] string? q)
         {
             return await _friendService.SearchUsers(q);
         }

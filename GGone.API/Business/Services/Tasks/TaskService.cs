@@ -14,12 +14,14 @@ namespace GGone.API.Business.Services.Tasks
         private readonly GGoneDbContext _context; // Veritabanı bağlamınız
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ILevelService _levelService;
 
-        public TaskService(GGoneDbContext context, IMapper mapper, ICurrentUserService currentUserService)
+        public TaskService(GGoneDbContext context, IMapper mapper, ICurrentUserService currentUserService, ILevelService levelService)
         {
             _context = context;
             _mapper = mapper;
             _currentUserService = currentUserService;
+            _levelService = levelService;
         }
 
         public async Task<TaskItem> CheckAndAwardBadges(string taskId)
@@ -95,11 +97,16 @@ namespace GGone.API.Business.Services.Tasks
             if (request.IsCompleted)
             {
                 if (!log.CompletedTaskIds.Contains(request.TaskId))
+                {
                     log.CompletedTaskIds.Add(request.TaskId);
+                    // XP Award: 10 XP per task
+                    await _levelService.AddXp(userId, 10, "Task Completed");
+                }
             }
             else
             {
                 log.CompletedTaskIds.Remove(request.TaskId);
+                // Opsiyonel: Görev geri alınırsa XP geri alınsın mı? Şimdilik hayır, basit tutalım.
             }
 
             await _context.SaveChangesAsync();

@@ -24,6 +24,11 @@ namespace GGone.API.Models.Auth
         public DateOnly LastLoginDate { get; set; }
 
         public string? DeleteAccountToken { get; set; }
+
         public DateTime? DeleteAccountExpires { get; set; }
+
+        // Leveling System
+        public int Level { get; set; } = 1;
+        public int CurrentXp { get; set; } = 0;
     }
 }

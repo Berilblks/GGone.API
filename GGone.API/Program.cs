@@ -101,6 +101,8 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();
+builder.Services.AddScoped<IProgressService, GGone.API.Business.Services.Progress.ProgressService>();
+builder.Services.AddScoped<ILevelService, GGone.API.Business.Services.Gamification.LevelService>();
 
 
 var app = builder.Build();

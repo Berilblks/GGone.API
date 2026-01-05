@@ -15,6 +15,7 @@ namespace GGone.API.Models.Auth
         [AllowedValues("Woman", "Man", ErrorMessage = "Gender must be either 'Woman' or 'Man'.")]
         public required string Gender { get; set; }
         
+        public double TargetWeight { get; set; }
         public string? ProfilePhoto { get; set; }
     }
 }

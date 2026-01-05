@@ -359,6 +359,7 @@ namespace GGone.API.Business.Services.Auth
             user.BirthDate = new DateOnly(request.BirthYear, request.BirthMonth, request.BirthDay);
             user.Height = request.Height;
             user.Weight = request.Weight;
+            user.TargetWeight = request.TargetWeight;
             user.Gender = request.Gender;
             user.ProfilePhoto = request.ProfilePhoto;
 

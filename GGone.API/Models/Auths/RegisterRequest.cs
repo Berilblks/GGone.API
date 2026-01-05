@@ -16,5 +16,6 @@ namespace GGone.API.Models.Auth
         public required string Gender { get; set; }
         public required string Email { get; set; }
         public required string Password { get; set; }
+        public required double TargetWeight { get; set; }
     }
 }

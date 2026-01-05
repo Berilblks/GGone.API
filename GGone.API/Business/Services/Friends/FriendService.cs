@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GGone.API.Models.Auth;
 using GGone.API.Business.Abstracts;
 using GGone.API.Data;
 using GGone.API.Models;
@@ -53,29 +54,86 @@ namespace GGone.API.Business.Services.Friends
 
         public async Task<BaseResponse<List<FriendResponse>>> SearchUsers(string query)
         {
+            var currentUserId = _currentUserService.UserId;
+            List<User> users;
+
             if (string.IsNullOrWhiteSpace(query))
             {
-                return new BaseResponse<List<FriendResponse>>
-                {
-                    Data = new List<FriendResponse>(),
-                    Success = true
-                };
+                Console.WriteLine($"DEBUG: SearchUsers called with EMPTY query. Fetching suggested users...");
+                
+                // Query boşsa rastgele/önerilen 20 kişiyi getir (Kendisi hariç, ismi olanlar)
+                users = await _context.Users
+                    .Where(u => u.Id != currentUserId && !string.IsNullOrEmpty(u.FullName))
+                    .OrderByDescending(u => u.LastLoginDate) // Örn: Son aktif olanlar
+                    .Take(20)
+                    .ToListAsync();
+                    
+                Console.WriteLine($"DEBUG: Found {users.Count} suggested users.");
+            }
+            else
+            {
+                query = query.ToLower();
+                // 1. Kullanıcıları bul (Username veya FullName)
+                users = await _context.Users
+                    .Where(u =>
+                        u.Id != currentUserId &&
+                    (
+                        (!string.IsNullOrEmpty(u.FullName) && u.FullName.ToLower().Contains(query)) ||
+                        (!string.IsNullOrEmpty(u.Username) && u.Username.ToLower().Contains(query))
+                    ))
+                    .Take(20) 
+                    .ToListAsync();
             }
 
-            var currentUserId = _currentUserService.UserId;
-
-            var users = await _context.Users
-                .Where(u =>
-                    u.Id != currentUserId &&
-                (
-                    (!string.IsNullOrEmpty(u.FullName) && u.FullName.Contains(query))
+            // 2. Bu kullanıcılarla olan ilişki durumunu çek
+            var userIds = users.Select(u => u.Id).ToList();
+            
+            var friendships = await _context.Friendships
+                .Where(f => 
+                    (f.UserId == currentUserId && userIds.Contains(f.FriendId)) || // Ben ekledim
+                    (f.FriendId == currentUserId && userIds.Contains(f.UserId))    // O ekledi
                 )
-                )
-                .Take(10)
                 .ToListAsync();
 
-            var response = _mapper.Map<List<FriendResponse>>(users);
-            return new BaseResponse<List<FriendResponse>> { Data = response, Success = true };
+            // 3. Response map ve status doldurma
+            var responseList = new List<FriendResponse>();
+
+            foreach (var user in users)
+            {
+                var resp = _mapper.Map<FriendResponse>(user);
+                
+                // İlişki kontrolü
+                var existingRel = friendships.FirstOrDefault(f => f.UserId == user.Id || f.FriendId == user.Id);
+                
+                if (existingRel == null)
+                {
+                    resp.Status = "None";
+                    resp.IsFriend = false;
+                }
+                else if (existingRel.IsAccepted)
+                {
+                    resp.Status = "Accepted";
+                    resp.IsFriend = true;
+                    // Eğer arkadaşsak resim vs düzgün görünsün
+                }
+                else
+                {
+                    // Bekleyen istek var. Ama kim kime atmış?
+                    if (existingRel.UserId == currentUserId)
+                    {
+                        resp.Status = "Pending"; // Ben atmışım, bekliyor
+                    }
+                    else
+                    {
+                        resp.Status = "Incoming"; // O bana atmış, kabul etmemi bekliyor
+                    }
+                    resp.IsFriend = false;
+                }
+
+                responseList.Add(resp);
+            }
+
+            return new BaseResponse<List<FriendResponse>> { Data = responseList, Success = true };
         }
         
 
