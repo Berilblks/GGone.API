@@ -31,6 +31,9 @@ namespace GGone.API.Business.Services.Exercises
             if (request.IsHome.HasValue)
                 query = query.Where(x => x.IsHome == request.IsHome.Value);
 
+            // Sadece resim olanları getir
+            query = query.Where(x => !string.IsNullOrEmpty(x.ImageUrl));
+
             var exercises = await query.ToListAsync();
 
             var responseList = _mapper.Map<List<ExerciseResponse>>(exercises);

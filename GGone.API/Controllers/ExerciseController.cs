@@ -11,9 +11,12 @@ namespace GGone.API.Controllers
     public class ExerciseController : ControllerBase
     {
         private readonly IExerciseService _exerciseService;
-        public ExerciseController(IExerciseService exerciseService)
+        private readonly IExerciseDataFetcher _exerciseDataFetcher;
+
+        public ExerciseController(IExerciseService exerciseService, IExerciseDataFetcher exerciseDataFetcher)
         {
             _exerciseService = exerciseService;
+            _exerciseDataFetcher = exerciseDataFetcher;
         }
 
         [HttpGet("GetExercises")]
@@ -26,6 +29,12 @@ namespace GGone.API.Controllers
         public async Task<BaseResponse<ExerciseResponse>> GetExerciseById(int id)
         {
             return await _exerciseService.GetExerciseById(id);
+        }
+
+        [HttpPost("FetchAll")]
+        public async Task<BaseResponse<string>> FetchAll()
+        {
+            return await _exerciseDataFetcher.FetchAndSaveAllExercises();
         }
 
     }
