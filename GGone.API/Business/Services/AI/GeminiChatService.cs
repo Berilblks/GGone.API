@@ -151,11 +151,38 @@ namespace GGone.API.Business.Services.AI
                     parts = new[] { new { text = lastMessageText } }
                 });
 
+                // ** YENİ EKLENTİ: Egzersiz Listesini System Prompt'a Ekle
+                // Eğer kullanıcı "workout" veya "antrenman" kelimesi geçiriyorsa contexti yükle.
+                // Her seferinde yüklemek token maliyetini artırır ama en doğrusu budur.
+                string systemInstructionText = SystemPrompts.CoachRole;
+
+                if (userMessage.ToLower().Contains("workout") || 
+                    userMessage.ToLower().Contains("training") || 
+                    userMessage.ToLower().Contains("program") ||
+                    userMessage.ToLower().Contains("antrenman"))
+                {
+                    string exerciseListContext = await GetExerciseContext();
+                    systemInstructionText += $"\n\nDATABASE CONTEXT:\n{exerciseListContext}\n\n" +
+                                             "WORKOUT GENERATION RULES:\n" +
+                                             "1. If the user asks for a workout plan, FIRST ask clarifying questions (Goal, Days/Week, Equipment/Location) if not already provided.\n" +
+                                             "2. Once you have enough info, generate the plan.\n" +
+                                             "3. YOU MUST USE ONLY EXERCISE IDs FROM THE LIST ABOVE. Do not make up IDs.\n" +
+                                             "4. To return the plan, FIRST write a confirmation message like 'Antrenman programın hazırlandı!', then use the [GENERATE_WORKOUT] tag followed by the JSON object.\n" +
+                                             "5. JSON Format: { \"PlanName\": \"...\", \"Goal\": \"...\", \"Difficulty\": \"...\", \"Days\": [ { \"DayName\": \"Monday\", \"FocusArea\": \"...\", \"Exercises\": [ { \"ExerciseId\": 123, \"Sets\": \"3\", \"Reps\": \"10-12\", \"Notes\": \"...\" } ] } ] }\n" +
+                                             "6. IMPORTANT: Do not use markdown code blocks (```json) inside the [GENERATE_WORKOUT] tag. Just raw JSON.";
+                }
+
+                // ** YENİ: TARGET WEIGHT AUTOMATION **
+                systemInstructionText += "\n\nTARGET WEIGHT RULE:\n" +
+                                         "If the user explicitly states a target weight (e.g., 'I want to be 70kg', 'Hedefim 80 kiloya düşmek'), " +
+                                         "you MUST include the tag [SET_TARGET_WEIGHT:number] at the end of your response. " +
+                                         "Example: 'Harika, hedefini güncelliyorum. [SET_TARGET_WEIGHT:70]'";
+
                 var payload = new
                 {
                     system_instruction = new
                     {
-                        parts = new[] { new { text = SystemPrompts.CoachRole } }
+                        parts = new[] { new { text = systemInstructionText } }
                     },
                     contents = contents.ToArray()
                 };
@@ -346,5 +373,35 @@ namespace GGone.API.Business.Services.AI
                 return new BaseResponse<List<ChatHistoryDto>> { Success = false, Message = "Could not retrieve history: " + ex.Message };
             }
         }
+    // ... (Existing Methods)
+
+        public async Task<BaseResponse<Models.Trainings.WorkoutPlan>> GenerateWorkoutPlan(string goal, int days, string level)
+        {
+            // Bu metod şimdilik boş, asıl mantığı GetAiReply içine prompt injection olarak ekleyeceğiz.
+            // Ama Controller'dan direkt çağrılmak istenirse diye stub olarak durabilir.
+            return new BaseResponse<Models.Trainings.WorkoutPlan> { Success = false, Message = "Use Ask endpoint for this feature." };
+        }
+
+        // Helper to get formatted exercise list context
+        private async Task<string> GetExerciseContext()
+        {
+            // Sadece resmi olan egzersizleri çek
+            var exercises = await _context.Exercises
+                .Where(x => !string.IsNullOrEmpty(x.ImageUrl))
+                .Select(x => new { x.Id, x.Name, x.BodyPart, x.ExerciseLevel, x.IsHome })
+                .ToListAsync();
+
+            // JSON maliyetli olabilir, basit string listesi yapalım
+            // ID: 123 - Name: Squat (Legs, Advanced) [Home: True]
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("AVAILABLE EXERCISES (Use ONLY these IDs):");
+            foreach(var ex in exercises)
+            {
+                sb.AppendLine($"- ID: {ex.Id} | Name: {ex.Name} | Part: {ex.BodyPart} | Lvl: {ex.ExerciseLevel} | Home: {ex.IsHome}");
+            }
+            return sb.ToString();
+        }
+
+        // ... (Existing GetAiReply Logic override below) ...
     }
 }

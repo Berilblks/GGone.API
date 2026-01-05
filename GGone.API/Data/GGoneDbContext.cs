@@ -33,6 +33,10 @@ namespace GGone.API.Data
         public DbSet<Friendship> Friendships { get; set; }
         public DbSet<WeightHistory> WeightHistories { get; set; }
 
+        public DbSet<Models.Trainings.WorkoutPlan> WorkoutPlans { get; set; }
+        public DbSet<Models.Trainings.WorkoutDay> WorkoutDays { get; set; }
+        public DbSet<Models.Trainings.WorkoutExercise> WorkoutExercises { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

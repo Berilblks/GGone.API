@@ -51,6 +51,100 @@ namespace GGone.API.Controllers
                         Console.WriteLine($"Error saving generated diet: {ex.Message}");
                     }
                 }
+
+                // ** YENİ: WORKOUT GENERATION CAPTURE **
+                if (response.Data.Reply.Contains("[GENERATE_WORKOUT]"))
+                {
+                    Console.WriteLine("DEBUG: [GENERATE_WORKOUT] tag DETECTED in AI response."); 
+                    try
+                    {
+                        // 1. Tag'i temizle ve JSON'u al
+                        var parts = response.Data.Reply.Split("[GENERATE_WORKOUT]");
+                        if (parts.Length < 2) 
+                        {
+                            Console.WriteLine("DEBUGGING ERROR: Tag found but split failed.");
+                        }
+
+                        var rawContent = parts[1].Trim();
+                        
+                        // JSON bulma mantığı (Daha esnek)
+                        int firstBrace = rawContent.IndexOf('{');
+                        int lastBrace = rawContent.LastIndexOf('}');
+                        
+                        if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace)
+                        {
+                            var jsonCandidate = rawContent.Substring(firstBrace, lastBrace - firstBrace + 1);
+                            
+                            Console.WriteLine($"DEBUG: Extracted JSON candidate: {jsonCandidate.Substring(0, Math.Min(jsonCandidate.Length, 50))}...");
+
+                            // 2. Deserialize et
+                            var workoutPlan = System.Text.Json.JsonSerializer.Deserialize<Models.Trainings.WorkoutPlan>(jsonCandidate, 
+                                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                            if (workoutPlan != null)
+                            {
+                                Console.WriteLine($"DEBUG: Deserialization SUCCESS. Plan Name: {workoutPlan.PlanName}. Saving to DB...");
+                                
+                                workoutPlan.UserId = _currentUserService.UserId;
+                                workoutPlan.CreatedAt = DateTime.UtcNow;
+
+                                _context.WorkoutPlans.Add(workoutPlan);
+                                await _context.SaveChangesAsync();
+                                
+                                Console.WriteLine($"DEBUG: WorkoutPlan SAVED to Database! Id: {workoutPlan.Id}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("DEBUG: Deserialization FAILED. workoutPlan object is null.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("DEBUG: JSON braces '{' and '}' not found in the content after tag.");
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"DEBUG ERROR saving generated workout: {ex.Message} | Stack: {ex.StackTrace}");
+                    }
+                }
+
+                else
+                {
+                    Console.WriteLine("DEBUG: [GENERATE_WORKOUT] tag NOT found in AI response.");
+                }
+
+                // ** YENİ: TARGET WEIGHT AUTOMATION **
+                // Örnek: [SET_TARGET_WEIGHT:75]
+                if (response.Data.Reply.Contains("[SET_TARGET_WEIGHT:"))
+                {
+                    try 
+                    {
+                        var startTag = "[SET_TARGET_WEIGHT:";
+                        int startIndex = response.Data.Reply.IndexOf(startTag) + startTag.Length;
+                        int endIndex = response.Data.Reply.IndexOf("]", startIndex);
+
+                        if (startIndex > -1 && endIndex > startIndex)
+                        {
+                            string weightStr = response.Data.Reply.Substring(startIndex, endIndex - startIndex).Trim();
+                            if (double.TryParse(weightStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double targetWeight))
+                            {
+                                var user = await _context.Users.FindAsync(_currentUserService.UserId);
+                                if (user != null)
+                                {
+                                    user.TargetWeight = targetWeight;
+                                    await _context.SaveChangesAsync();
+                                    Console.WriteLine($"DEBUG: User TargetWeight updated to {targetWeight}kg via AI.");
+                                }
+                            }
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                         Console.WriteLine($"Error updating target weight: {ex.Message}");
+                    }
+                }
             }
 
             return response;
@@ -78,6 +172,27 @@ namespace GGone.API.Controllers
             }
 
             return new BaseResponse<DietPlan> { Success = true, Data = plan };
+        }
+
+        [HttpGet("GetUserWorkoutPlan")]
+        public async Task<BaseResponse<Models.Trainings.WorkoutPlan>> GetUserWorkoutPlan()
+        {
+            var userId = _currentUserService.UserId;
+            // En son oluşturulan planı getir, günleri ve egzersiz detaylarını (resim dahil) include et.
+            var plan = await _context.WorkoutPlans
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .Include(p => p.Days)
+                .ThenInclude(d => d.Exercises)
+                .ThenInclude(we => we.Exercise) // Resim ve detaylar için Exercise tablosuna join
+                .FirstOrDefaultAsync();
+
+            if (plan == null)
+            {
+                return new BaseResponse<Models.Trainings.WorkoutPlan> { Success = false, Message = "No workout plan found." };
+            }
+
+            return new BaseResponse<Models.Trainings.WorkoutPlan> { Success = true, Data = plan };
         }
 
         [HttpGet("History")]
