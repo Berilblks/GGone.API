@@ -4,6 +4,7 @@ using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GGone.API.Migrations
 {
     [DbContext(typeof(GGoneDbContext))]
-    partial class GGoneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111103820_UpdateWorkoutPlanStructure")]
+    partial class UpdateWorkoutPlanStructure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -633,9 +636,6 @@ namespace GGone.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ExerciseId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -654,8 +654,6 @@ namespace GGone.API.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ExerciseId");
 
                     b.HasIndex("WorkoutDayId");
 
@@ -757,17 +755,11 @@ namespace GGone.API.Migrations
 
             modelBuilder.Entity("GGone.API.Models.Trainings.WorkoutExercise", b =>
                 {
-                    b.HasOne("GGone.API.Models.Exercises.Exercise", "Exercise")
-                        .WithMany()
-                        .HasForeignKey("ExerciseId");
-
                     b.HasOne("GGone.API.Models.Trainings.WorkoutDay", "WorkoutDay")
                         .WithMany("Exercises")
                         .HasForeignKey("WorkoutDayId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Exercise");
 
                     b.Navigation("WorkoutDay");
                 });

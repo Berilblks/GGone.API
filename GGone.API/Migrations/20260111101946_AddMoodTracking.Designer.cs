@@ -4,6 +4,7 @@ using GGone.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GGone.API.Migrations
 {
     [DbContext(typeof(GGoneDbContext))]
-    partial class GGoneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111101946_AddMoodTracking")]
+    partial class AddMoodTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -615,6 +618,9 @@ namespace GGone.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FocusArea")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("WorkoutPlanId")
                         .HasColumnType("int");
 
@@ -633,22 +639,22 @@ namespace GGone.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ExerciseId")
+                    b.Property<int>("ExerciseId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("ExerciseNameSnapshot")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reps")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Reps")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Sets")
-                        .HasColumnType("int");
+                    b.Property<string>("Sets")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("WorkoutDayId")
                         .HasColumnType("int");
@@ -674,15 +680,10 @@ namespace GGone.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Difficulty")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Goal")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<string>("PlanName")
                         .IsRequired()
@@ -759,7 +760,9 @@ namespace GGone.API.Migrations
                 {
                     b.HasOne("GGone.API.Models.Exercises.Exercise", "Exercise")
                         .WithMany()
-                        .HasForeignKey("ExerciseId");
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("GGone.API.Models.Trainings.WorkoutDay", "WorkoutDay")
                         .WithMany("Exercises")

@@ -8,6 +8,10 @@ namespace GGone.API.Models.Auth
         public int Id { get; set; }
         public string? FullName { get; set; }
         public string? Username { get; set; }
+        public int CurrentWaterIntake { get; set; } = 0;
+        public DateTime LastWaterDate { get; set; } = DateTime.Now;
+        public string CurrentMood { get; set; } = "";
+        public DateTime LastMoodDate { get; set; } = DateTime.MinValue;
         public DateOnly BirthDate { get; set; }
         public double Height { get; set; }
         public double Weight { get; set; }

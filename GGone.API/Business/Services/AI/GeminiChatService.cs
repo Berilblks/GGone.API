@@ -162,14 +162,14 @@ namespace GGone.API.Business.Services.AI
                     userMessage.ToLower().Contains("antrenman"))
                 {
                     string exerciseListContext = await GetExerciseContext();
-                    systemInstructionText += $"\n\nDATABASE CONTEXT:\n{exerciseListContext}\n\n" +
+                    systemInstructionText += $"\n\nAVAILABLE EXERCISES (DATABASE):\n{exerciseListContext}\n\n" +
                                              "WORKOUT GENERATION RULES:\n" +
                                              "1. If the user asks for a workout plan, FIRST ask clarifying questions (Goal, Days/Week, Equipment/Location) if not already provided.\n" +
-                                             "2. Once you have enough info, generate the plan.\n" +
-                                             "3. YOU MUST USE ONLY EXERCISE IDs FROM THE LIST ABOVE. Do not make up IDs.\n" +
-                                             "4. To return the plan, FIRST write a confirmation message like 'Antrenman programın hazırlandı!', then use the [GENERATE_WORKOUT] tag followed by the JSON object.\n" +
-                                             "5. JSON Format: { \"PlanName\": \"...\", \"Goal\": \"...\", \"Difficulty\": \"...\", \"Days\": [ { \"DayName\": \"Monday\", \"FocusArea\": \"...\", \"Exercises\": [ { \"ExerciseId\": 123, \"Sets\": \"3\", \"Reps\": \"10-12\", \"Notes\": \"...\" } ] } ] }\n" +
-                                             "6. IMPORTANT: Do not use markdown code blocks (```json) inside the [GENERATE_WORKOUT] tag. Just raw JSON.";
+                                             "2. Generate a plan using ONLY the exercises listed above. Do not invent new exercises.\n" +
+                                             "3. Use the EXACT 'Name' from the list for the 'Name' field in JSON.\n" +
+                                             "4. To return the plan, FIRST write a confirmation message, then use the [GENERATE_WORKOUT] tag followed by the JSON object.\n" +
+                                             "5. JSON Format: { \"PlanName\": \"...\", \"Goal\": \"...\", \"Difficulty\": \"...\", \"Days\": [ { \"DayName\": \"Monday\", \"Exercises\": [ { \"Name\": \"Exact Name From List\", \"Sets\": 3, \"Reps\": 12, \"Notes\": \"...\" } ] } ] }\n" +
+                                             "6. IMPORTANT: Do not use markdown code blocks inside the [GENERATE_WORKOUT] tag. Just raw JSON.";
                 }
 
                 // ** YENİ: TARGET WEIGHT AUTOMATION **

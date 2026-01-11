@@ -87,6 +87,31 @@ namespace GGone.API.Controllers
                                 
                                 workoutPlan.UserId = _currentUserService.UserId;
                                 workoutPlan.CreatedAt = DateTime.UtcNow;
+                                workoutPlan.IsActive = true; // FORCE ACTIVE
+
+                                // LINK EXERCISES BY NAME
+                                foreach(var day in workoutPlan.Days)
+                                {
+                                    foreach(var exercise in day.Exercises)
+                                    {
+                                        var lookupName = exercise.Name.Trim().ToLower();
+                                        Console.WriteLine($"DEBUG: Looking up exercise: '{lookupName}'");
+
+                                        // Try to find matching exercise in DB
+                                        var dbExercise = await _context.Exercises
+                                            .FirstOrDefaultAsync(e => e.Name.Trim().ToLower() == lookupName);
+                                        
+                                        if (dbExercise != null)
+                                        {
+                                            exercise.ExerciseId = dbExercise.Id;
+                                            Console.WriteLine($"DEBUG: Match FOUND! Linked to ID: {dbExercise.Id} | Image: {dbExercise.ImageUrl}");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"DEBUG: Match FAILED for '{lookupName}'");
+                                        }
+                                    }
+                                }
 
                                 _context.WorkoutPlans.Add(workoutPlan);
                                 await _context.SaveChangesAsync();
@@ -175,24 +200,24 @@ namespace GGone.API.Controllers
         }
 
         [HttpGet("GetUserWorkoutPlan")]
-        public async Task<BaseResponse<Models.Trainings.WorkoutPlan>> GetUserWorkoutPlan()
+        public async Task<IActionResult> GetUserWorkoutPlan()
         {
             var userId = _currentUserService.UserId;
-            // En son oluşturulan planı getir, günleri ve egzersiz detaylarını (resim dahil) include et.
+            
+            // Get the most recent active plan
             var plan = await _context.WorkoutPlans
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.CreatedAt)
-                .Include(p => p.Days)
+                .Include(wp => wp.Days)
                 .ThenInclude(d => d.Exercises)
-                .ThenInclude(we => we.Exercise) // Resim ve detaylar için Exercise tablosuna join
+                    .ThenInclude(e => e.Exercise) // <--- INCLUDE ADDED
+                .Where(wp => wp.UserId == userId && wp.IsActive)
+                .OrderByDescending(wp => wp.CreatedAt)
                 .FirstOrDefaultAsync();
-
+                
             if (plan == null)
             {
-                return new BaseResponse<Models.Trainings.WorkoutPlan> { Success = false, Message = "No workout plan found." };
+                return Ok(new { success = false, message = "No active plan found." });
             }
-
-            return new BaseResponse<Models.Trainings.WorkoutPlan> { Success = true, Data = plan };
+            return Ok(new { success = true, data = plan });
         }
 
         [HttpGet("History")]
